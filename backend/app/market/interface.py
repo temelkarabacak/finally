@@ -5,6 +5,15 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 
 
+def normalize_ticker(ticker: str) -> str:
+    """Canonicalize a ticker symbol: uppercase, trimmed.
+
+    Both MarketDataSource implementations must use this so the PriceCache
+    is keyed identically regardless of which source is active.
+    """
+    return ticker.upper().strip()
+
+
 class MarketDataSource(ABC):
     """Contract for market data providers.
 

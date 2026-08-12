@@ -9,7 +9,7 @@ from massive import RESTClient
 from massive.rest.models import SnapshotMarketType
 
 from .cache import PriceCache
-from .interface import MarketDataSource
+from .interface import MarketDataSource, normalize_ticker
 
 logger = logging.getLogger(__name__)
 
@@ -64,13 +64,13 @@ class MassiveDataSource(MarketDataSource):
         logger.info("Massive poller stopped")
 
     async def add_ticker(self, ticker: str) -> None:
-        ticker = ticker.upper().strip()
+        ticker = normalize_ticker(ticker)
         if ticker not in self._tickers:
             self._tickers.append(ticker)
             logger.info("Massive: added ticker %s (will appear on next poll)", ticker)
 
     async def remove_ticker(self, ticker: str) -> None:
-        ticker = ticker.upper().strip()
+        ticker = normalize_ticker(ticker)
         self._tickers = [t for t in self._tickers if t != ticker]
         self._cache.remove(ticker)
         logger.info("Massive: removed ticker %s", ticker)

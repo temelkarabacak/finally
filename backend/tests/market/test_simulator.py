@@ -1,5 +1,7 @@
 """Tests for GBMSimulator."""
 
+import math
+
 from app.market.seed_prices import SEED_PRICES
 from app.market.simulator import GBMSimulator
 
@@ -129,3 +131,18 @@ class TestGBMSimulator:
         if '.' in price_str:
             decimal_part = price_str.split('.')[1]
             assert len(decimal_part) <= 2
+
+    def test_full_default_watchlist_stays_sane(self):
+        """The Cholesky correlation matrix must hold up for the full 10-ticker
+        default watchlist, not just the 1-2 ticker cases the rest of the suite
+        exercises."""
+        sim = GBMSimulator(tickers=list(SEED_PRICES.keys()))
+        assert sim._cholesky is not None
+        assert sim._cholesky.shape == (10, 10)
+
+        for _ in range(500):
+            prices = sim.step()
+            assert set(prices.keys()) == set(SEED_PRICES.keys())
+            for ticker, price in prices.items():
+                assert price > 0
+                assert not math.isnan(price)

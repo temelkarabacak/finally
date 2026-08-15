@@ -1,273 +1,206 @@
-# Market Data Interface Design
+# Market Interface Design
 
-Unified Python interface for market data in FinAlly. Two implementations (simulator and Massive API) behind one abstract interface. All downstream code — SSE streaming, price cache, portfolio valuation — is source-agnostic.
+Design of FinAlly's unified Python interface for retrieving stock prices — a single API that
+uses the Massive API when `MASSIVE_API_KEY` is set, and falls back to an in-process simulator
+otherwise. Implemented in `backend/app/market/`. See `MASSIVE_API.md` for the Massive research
+this design is built on, and `MARKET_SIMULATOR.md` for the simulator's own internals.
 
-## Core Data Model
+## Why a Unified Interface
+
+Every other part of the backend — SSE streaming, portfolio valuation, trade execution — needs
+"the current price of ticker X" and nothing else about where it came from. Coupling that code to
+either Massive's REST client or a simulator's internal state would mean two code paths
+everywhere prices are read. Instead:
+
+- One abstract contract (`MarketDataSource`) that both a simulator and a Massive poller implement
+- One shared, thread-safe cache (`PriceCache`) that all downstream code reads from
+- One factory function that picks the implementation based on environment, so nothing else in
+  the codebase branches on "are we using Massive or the simulator?"
+
+```
+                    MarketDataSource (ABC)
+                   /                      \
+       SimulatorDataSource          MassiveDataSource
+       (GBM, in-process)            (REST poll, Polygon/Massive)
+                   \                      /
+                    v                    v
+                       PriceCache
+                    (thread-safe, in-memory)
+                    /        |         \
+                   v         v          v
+          SSE stream   Portfolio    Trade execution
+          endpoint     valuation
+```
+
+## Core Types
+
+### `PriceUpdate` (`models.py`)
+
+An immutable snapshot of one ticker's price at a point in time. Frozen dataclass, not a mutable
+object being updated in place — every price change produces a new instance.
 
 ```python
-from dataclasses import dataclass
-
-@dataclass
+@dataclass(frozen=True, slots=True)
 class PriceUpdate:
-    """A single price update for one ticker."""
     ticker: str
     price: float
     previous_price: float
-    timestamp: float          # Unix seconds
-    change: float             # price - previous_price
-    direction: str            # "up", "down", or "flat"
+    timestamp: float = field(default_factory=time.time)  # Unix seconds
+
+    @property
+    def change(self) -> float: ...          # price - previous_price, rounded
+    @property
+    def change_percent(self) -> float: ...  # % change, 0.0 if previous_price is 0
+    @property
+    def direction(self) -> str: ...          # "up" / "down" / "flat"
+
+    def to_dict(self) -> dict: ...           # JSON-serializable, used directly for SSE payloads
 ```
 
-This is the only data structure that leaves the market data layer. Everything downstream works with `PriceUpdate` objects.
+Computing `change`/`change_percent`/`direction` as properties (rather than storing them) means
+there's exactly one place that defines what "up" means, and no risk of a writer forgetting to
+set them.
 
-## Abstract Interface
+### `MarketDataSource` (`interface.py`)
+
+The abstract base class both implementations satisfy:
 
 ```python
-from abc import ABC, abstractmethod
-
 class MarketDataSource(ABC):
-    """Abstract interface for market data providers."""
-
-    @abstractmethod
-    async def start(self, tickers: list[str]) -> None:
-        """Begin producing price updates for the given tickers."""
-
-    @abstractmethod
-    async def stop(self) -> None:
-        """Stop producing price updates and clean up."""
-
-    @abstractmethod
-    async def add_ticker(self, ticker: str) -> None:
-        """Add a ticker to the active set."""
-
-    @abstractmethod
-    async def remove_ticker(self, ticker: str) -> None:
-        """Remove a ticker from the active set."""
-
-    @abstractmethod
-    def get_tickers(self) -> list[str]:
-        """Return the current list of active tickers."""
+    async def start(self, tickers: list[str]) -> None: ...
+    async def stop(self) -> None: ...
+    async def add_ticker(self, ticker: str) -> None: ...
+    async def remove_ticker(self, ticker: str) -> None: ...
+    def get_tickers(self) -> list[str]: ...
 ```
 
-Both implementations write to a shared `PriceCache` (see below). The interface does **not** return prices directly — it pushes updates into the cache on its own schedule.
+Lifecycle contract: `start()` is called exactly once at app startup with the initial active
+ticker set; `add_ticker`/`remove_ticker` handle watchlist and position changes while running;
+`stop()` is called once at shutdown and must be safe to call more than once (idempotent).
+Neither method returns prices — implementations push into the shared `PriceCache` on their own
+schedule, and callers read from the cache, never from the source directly.
 
-## Price Cache
+### `PriceCache` (`cache.py`)
 
-Shared in-memory store that both data sources write to and the SSE streamer reads from.
+Thread-safe (`threading.Lock`) in-memory store, keyed by ticker. One writer at a time (whichever
+`MarketDataSource` is active), multiple readers (SSE endpoint, portfolio math, trade execution).
 
 ```python
-import time
-from threading import Lock
-
 class PriceCache:
-    """Thread-safe cache of latest prices per ticker."""
+    def update(self, ticker: str, price: float, timestamp: float | None = None) -> PriceUpdate: ...
+    def get(self, ticker: str) -> PriceUpdate | None: ...
+    def get_all(self) -> dict[str, PriceUpdate]: ...
+    def get_price(self, ticker: str) -> float | None: ...
+    def remove(self, ticker: str) -> None: ...
 
-    def __init__(self):
-        self._prices: dict[str, PriceUpdate] = {}
-        self._lock = Lock()
-
-    def update(self, ticker: str, price: float, timestamp: float | None = None) -> PriceUpdate:
-        """Update price for a ticker. Returns the PriceUpdate."""
-        with self._lock:
-            ts = timestamp or time.time()
-            previous = self._prices.get(ticker)
-            previous_price = previous.price if previous else price
-
-            if price > previous_price:
-                direction = "up"
-            elif price < previous_price:
-                direction = "down"
-            else:
-                direction = "flat"
-
-            update = PriceUpdate(
-                ticker=ticker,
-                price=price,
-                previous_price=previous_price,
-                timestamp=ts,
-                change=price - previous_price,
-                direction=direction,
-            )
-            self._prices[ticker] = update
-            return update
-
-    def get(self, ticker: str) -> PriceUpdate | None:
-        """Get latest price for a ticker."""
-        with self._lock:
-            return self._prices.get(ticker)
-
-    def get_all(self) -> dict[str, PriceUpdate]:
-        """Get all current prices."""
-        with self._lock:
-            return dict(self._prices)
-
-    def remove(self, ticker: str) -> None:
-        """Remove a ticker from the cache."""
-        with self._lock:
-            self._prices.pop(ticker, None)
+    @property
+    def version(self) -> int: ...  # increments on every update() call
 ```
 
-## Factory Function
+`update()` looks up the ticker's existing entry to compute `previous_price` — callers only ever
+supply the new price, never the delta. The first update for a ticker sets `previous_price ==
+price` (direction reports "flat" rather than a misleading up/down on the very first tick).
 
-Select the data source at startup based on environment:
+The `version` counter exists purely so the SSE endpoint can detect "has anything changed since I
+last checked" without diffing the whole price dict — see `stream.py`, which polls
+`price_cache.version` every 500ms and only serializes + sends when it has moved.
+
+### `create_market_data_source()` (`factory.py`)
 
 ```python
-import os
-
 def create_market_data_source(price_cache: PriceCache) -> MarketDataSource:
-    """Create the appropriate market data source based on environment."""
     api_key = os.environ.get("MASSIVE_API_KEY", "").strip()
-
     if api_key:
-        from .massive_client import MassiveDataSource
         return MassiveDataSource(api_key=api_key, price_cache=price_cache)
-    else:
-        from .simulator import SimulatorDataSource
-        return SimulatorDataSource(price_cache=price_cache)
+    return SimulatorDataSource(price_cache=price_cache)
 ```
 
-## Massive Implementation Sketch
+This is the entire selection logic PLAN.md §5 describes: non-empty `MASSIVE_API_KEY` → Massive,
+otherwise → simulator. The factory returns an *unstarted* source; the caller is responsible for
+`await source.start(tickers)`. Nothing else in the codebase reads `MASSIVE_API_KEY` directly.
+
+## The Two Implementations
+
+### `SimulatorDataSource` (`simulator.py`)
+
+Runs an `asyncio.Task` loop that calls `GBMSimulator.step()` every 500ms and writes every
+resulting price into the cache. No network calls, no external dependency, always available. Full
+design in `MARKET_SIMULATOR.md`.
+
+### `MassiveDataSource` (`massive_client.py`)
+
+Runs an `asyncio.Task` loop that calls the Massive REST client's `get_snapshot_all()` on an
+interval (15s default — sized for the free tier's 5-calls/minute limit; see `MASSIVE_API.md` for
+why paid tiers can safely poll faster). The synchronous `massive` client call is wrapped in
+`asyncio.to_thread()` so it doesn't block the event loop.
 
 ```python
-import asyncio
-from massive import RESTClient
-from massive.rest.models import SnapshotMarketType
-
-class MassiveDataSource(MarketDataSource):
-    def __init__(self, api_key: str, price_cache: PriceCache, poll_interval: float = 15.0):
-        self._client = RESTClient(api_key=api_key)
-        self._cache = price_cache
-        self._interval = poll_interval
-        self._tickers: list[str] = []
-        self._task: asyncio.Task | None = None
-
-    async def start(self, tickers: list[str]) -> None:
-        self._tickers = list(tickers)
-        self._task = asyncio.create_task(self._poll_loop())
-
-    async def stop(self) -> None:
-        if self._task:
-            self._task.cancel()
-
-    async def add_ticker(self, ticker: str) -> None:
-        if ticker not in self._tickers:
-            self._tickers.append(ticker)
-
-    async def remove_ticker(self, ticker: str) -> None:
-        self._tickers = [t for t in self._tickers if t != ticker]
-        self._cache.remove(ticker)
-
-    def get_tickers(self) -> list[str]:
-        return list(self._tickers)
-
-    async def _poll_loop(self) -> None:
-        while True:
-            await self._poll_once()
-            await asyncio.sleep(self._interval)
-
-    async def _poll_once(self) -> None:
-        if not self._tickers:
-            return
-        # Run synchronous Massive client in thread pool
-        snapshots = await asyncio.to_thread(
-            self._client.get_snapshot_all,
-            market_type=SnapshotMarketType.STOCKS,
-            tickers=self._tickers,
-        )
+async def _poll_once(self) -> None:
+    try:
+        snapshots = await asyncio.to_thread(self._fetch_snapshots)
         for snap in snapshots:
             self._cache.update(
                 ticker=snap.ticker,
                 price=snap.last_trade.price,
-                timestamp=snap.last_trade.timestamp / 1000,  # ms -> seconds
+                timestamp=snap.last_trade.timestamp / 1000.0,  # ms -> s
             )
+    except Exception as e:
+        logger.error("Massive poll failed: %s", e)
+        # no re-raise; the loop retries on the next interval
 ```
 
-## Simulator Implementation Sketch
+**Permanent failover** (PLAN.md §5/§6): a poll failure — auth error, rate limit, network error,
+service error, at startup or mid-run — is logged and the loop simply continues to the next
+interval on its own. The *permanent* switch to the simulator (stopping the Massive task,
+transferring its tracked tickers to a freshly started `SimulatorDataSource`) is orchestrated one
+level up, in the app's startup/lifespan code that owns the active `MarketDataSource` reference —
+not inside `MassiveDataSource` itself, which only knows how to poll and log. This keeps the
+failover policy in one place rather than duplicated inside both source implementations.
+
+## Shared Price Cache and the Active Ticker Set
+
+Per PLAN.md §6, the set of tickers actively tracked (and thus present in the cache and streamed
+over SSE) is the **union of the watchlist and any tickers with open positions** — defined
+identically regardless of which `MarketDataSource` is active. Removing a ticker from the
+watchlist calls `remove_ticker()`, but the source only actually drops it from the cache when no
+open position still references it; the API layer (not `MarketDataSource`) is what checks
+positions before deciding whether a `remove_ticker()` call is safe to issue, since the source
+itself has no knowledge of the portfolio.
+
+This is why `PriceCache` is a separate object from either source: a future multi-user version
+could keep one cache per user session while still sharing a single upstream poller, without
+changing this interface.
+
+## SSE Streaming (`stream.py`)
+
+`create_stream_router(price_cache)` returns a FastAPI `APIRouter` exposing
+`GET /api/stream/prices`. The generator polls `price_cache.version` every 500ms; when it has
+changed since the last send, it serializes `price_cache.get_all()` (every tracked ticker, not
+just the one that changed — simplest correct behavior, and the payload is small) and yields one
+SSE `data:` frame. A `retry: 1000` directive is sent once at connection open so `EventSource`'s
+built-in reconnect logic retries after 1s on drop. The loop exits when
+`request.is_disconnected()` reports true, so a stale generator doesn't keep running against a
+closed connection.
+
+## Usage for Downstream Code
 
 ```python
-import asyncio
+from app.market import PriceCache, create_market_data_source
 
-class SimulatorDataSource(MarketDataSource):
-    def __init__(self, price_cache: PriceCache, update_interval: float = 0.5):
-        self._cache = price_cache
-        self._interval = update_interval
-        self._tickers: list[str] = []
-        self._task: asyncio.Task | None = None
-        self._sim: GBMSimulator | None = None  # See MARKET_SIMULATOR.md
+# Startup
+cache = PriceCache()
+source = create_market_data_source(cache)  # reads MASSIVE_API_KEY
+await source.start(["AAPL", "GOOGL", "MSFT", ...])
 
-    async def start(self, tickers: list[str]) -> None:
-        self._tickers = list(tickers)
-        self._sim = GBMSimulator(tickers=self._tickers)
-        self._task = asyncio.create_task(self._run_loop())
+# Reading prices — identical regardless of which source is active
+update = cache.get("AAPL")          # PriceUpdate | None
+price = cache.get_price("AAPL")     # float | None
+all_prices = cache.get_all()        # dict[str, PriceUpdate]
 
-    async def stop(self) -> None:
-        if self._task:
-            self._task.cancel()
+# Watchlist / position changes
+await source.add_ticker("TSLA")
+await source.remove_ticker("GOOGL")
 
-    async def add_ticker(self, ticker: str) -> None:
-        if ticker not in self._tickers:
-            self._tickers.append(ticker)
-            self._sim.add_ticker(ticker)
-
-    async def remove_ticker(self, ticker: str) -> None:
-        self._tickers = [t for t in self._tickers if t != ticker]
-        self._sim.remove_ticker(ticker)
-        self._cache.remove(ticker)
-
-    def get_tickers(self) -> list[str]:
-        return list(self._tickers)
-
-    async def _run_loop(self) -> None:
-        while True:
-            prices = self._sim.step()  # Returns dict[str, float]
-            for ticker, price in prices.items():
-                self._cache.update(ticker=ticker, price=price)
-            await asyncio.sleep(self._interval)
+# Shutdown
+await source.stop()
 ```
-
-## Integration with SSE
-
-The SSE endpoint reads from the `PriceCache` and pushes to connected clients:
-
-```python
-async def price_stream(price_cache: PriceCache):
-    """SSE generator that yields price updates."""
-    while True:
-        prices = price_cache.get_all()
-        data = {
-            ticker: {
-                "ticker": p.ticker,
-                "price": p.price,
-                "previous_price": p.previous_price,
-                "change": p.change,
-                "direction": p.direction,
-                "timestamp": p.timestamp,
-            }
-            for ticker, p in prices.items()
-        }
-        yield f"data: {json.dumps(data)}\n\n"
-        await asyncio.sleep(0.5)
-```
-
-## File Structure
-
-```
-backend/
-  app/
-    market/
-      __init__.py
-      models.py             # PriceUpdate dataclass
-      interface.py           # MarketDataSource ABC, PriceCache
-      factory.py             # create_market_data_source()
-      massive_client.py      # MassiveDataSource
-      simulator.py           # SimulatorDataSource + GBMSimulator
-      seed_prices.py         # Default ticker seed prices
-```
-
-## Lifecycle
-
-1. **App startup**: Create `PriceCache`, call `create_market_data_source(price_cache)`, then `await source.start(initial_tickers)`
-2. **Watchlist changes**: Call `source.add_ticker()` or `source.remove_ticker()`
-3. **SSE streaming**: Reads from `PriceCache.get_all()` every 500ms
-4. **Trade execution**: Reads current price from `PriceCache.get(ticker)`
-5. **App shutdown**: Call `await source.stop()`

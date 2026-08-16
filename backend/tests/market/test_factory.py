@@ -77,3 +77,18 @@ class TestFactory:
 
         assert isinstance(source, MassiveDataSource)
         assert source._cache is cache
+
+    def test_massive_receives_failover_callback(self):
+        """The on_permanent_failure callback is threaded through to MassiveDataSource
+        (PLAN.md section 6 failover) and ignored for the simulator, which has no
+        further fallback."""
+        cache = PriceCache()
+
+        async def callback(tickers: list[str]) -> None:
+            pass
+
+        with patch.dict(os.environ, {"MASSIVE_API_KEY": "test-key"}, clear=True):
+            source = create_market_data_source(cache, on_permanent_failure=callback)
+
+        assert isinstance(source, MassiveDataSource)
+        assert source._on_permanent_failure is callback

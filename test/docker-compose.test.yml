@@ -1,0 +1,56 @@
+name: finally-e2e
+
+# End-to-end stack: the production image plus a Playwright container, so browser
+# dependencies stay out of the app image.
+#
+#   docker compose -f test/docker-compose.test.yml up --build --exit-code-from playwright
+#   docker compose -f test/docker-compose.test.yml down -v
+services:
+  # Not named "app": the .app TLD is HSTS-preloaded, so Chrome forces https://
+  # on a host called "app" and every navigation fails with ERR_SSL_PROTOCOL_ERROR.
+  finally-app:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    image: finally:latest
+    environment:
+      # Deterministic assistant replies: no OpenRouter key, no network calls.
+      LLM_MOCK: "true"
+      # Force the built-in simulator regardless of what is in the developer's .env.
+      MASSIVE_API_KEY: ""
+      OPENROUTER_API_KEY: ""
+    # A scratch database per run: seeded fresh, never the developer's db/finally.db.
+    tmpfs:
+      - /app/db
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health')
+      interval: 2s
+      timeout: 5s
+      retries: 30
+      start_period: 3s
+
+  playwright:
+    image: mcr.microsoft.com/playwright:v1.62.1-noble
+    depends_on:
+      finally-app:
+        condition: service_healthy
+    working_dir: /e2e
+    volumes:
+      - ./:/e2e
+    # Reports and node_modules land in the bind mount, so write them as the host
+    # user instead of root. Override with E2E_UID/E2E_GID if yours is not 1000.
+    user: "${E2E_UID:-1000}:${E2E_GID:-1000}"
+    environment:
+      BASE_URL: http://finally-app:8000
+      CI: "true"
+      # npm needs a writable HOME; the default /root is not ours to write to.
+      HOME: /e2e
+    # Chromium's sandbox needs privileges the default container profile withholds.
+    ipc: host
+    init: true
+    command: >
+      sh -c "npm ci --no-audit --no-fund && npx playwright test"

@@ -60,7 +60,8 @@ class TestGenerateEvents:
         data_events = [e for e in events if e.startswith("data:")]
         assert len(data_events) == 1
         payload = _parse_data_frame(data_events[0])
-        assert payload["AAPL"]["price"] == 190.0
+        assert payload["ticker"] == "AAPL"
+        assert payload["price"] == 190.0
 
     async def test_data_frame_emitted_again_on_new_version(self):
         cache = PriceCache()
@@ -71,11 +72,42 @@ class TestGenerateEvents:
         assert await gen.__anext__() == "retry: 1000\n\n"
 
         first_data = await gen.__anext__()
-        assert _parse_data_frame(first_data)["AAPL"]["price"] == 190.0
+        assert _parse_data_frame(first_data)["price"] == 190.0
 
         cache.update("AAPL", 191.0)
         second_data = await gen.__anext__()
-        assert _parse_data_frame(second_data)["AAPL"]["price"] == 191.0
+        assert _parse_data_frame(second_data)["price"] == 191.0
+
+    async def test_one_flat_data_frame_per_ticker(self):
+        """The wire format is one `data:` line per ticker (a flat object with
+        ticker/price/previous_price/timestamp/change/direction), matching
+        PLAN.md section 6 and the frontend's PriceTick type — not a single
+        ticker-keyed dict. Pins the format so backend and frontend can't
+        silently drift apart again."""
+        cache = PriceCache()
+        cache.update("AAPL", 190.0)
+        cache.update("GOOGL", 175.0)
+        request = FakeRequest(disconnect_after=1)
+
+        events = [event async for event in _generate_events(cache, request, interval=0.01)]
+
+        data_events = [e for e in events if e.startswith("data:")]
+        assert len(data_events) == 2
+
+        payloads = [_parse_data_frame(e) for e in data_events]
+        tickers = {p["ticker"] for p in payloads}
+        assert tickers == {"AAPL", "GOOGL"}
+        for payload in payloads:
+            assert isinstance(payload["timestamp"], str)
+            assert set(payload) == {
+                "ticker",
+                "price",
+                "previous_price",
+                "timestamp",
+                "change",
+                "change_percent",
+                "direction",
+            }
 
     async def test_stops_on_disconnect(self):
         cache = PriceCache()

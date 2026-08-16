@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+from collections.abc import Awaitable, Callable
 
 from massive import RESTClient
 from massive.rest.models import SnapshotMarketType
@@ -12,6 +13,8 @@ from .cache import PriceCache
 from .interface import MarketDataSource, normalize_ticker
 
 logger = logging.getLogger(__name__)
+
+OnPermanentFailure = Callable[[list[str]], Awaitable[None]]
 
 
 class MassiveDataSource(MarketDataSource):
@@ -30,6 +33,7 @@ class MassiveDataSource(MarketDataSource):
         api_key: str,
         price_cache: PriceCache,
         poll_interval: float = 15.0,
+        on_permanent_failure: OnPermanentFailure | None = None,
     ) -> None:
         self._api_key = api_key
         self._cache = price_cache
@@ -37,6 +41,10 @@ class MassiveDataSource(MarketDataSource):
         self._tickers: list[str] = []
         self._task: asyncio.Task | None = None
         self._client: RESTClient | None = None
+        self._on_permanent_failure = on_permanent_failure
+        # Set on the first poll failure (auth, rate limit, network, service error).
+        # Once true, polling stops for good and never retries Massive this run.
+        self._failed = False
 
     async def start(self, tickers: list[str]) -> None:
         self._client = RESTClient(api_key=self._api_key)
@@ -44,6 +52,11 @@ class MassiveDataSource(MarketDataSource):
 
         # Do an immediate first poll so the cache has data right away
         await self._poll_once()
+        if self._failed:
+            # Permanent failover already happened inside _poll_once — never
+            # start the polling loop, per PLAN.md section 6 ("whether at
+            # startup or during later polling").
+            return
 
         self._task = asyncio.create_task(self._poll_loop(), name="massive-poller")
         logger.info(
@@ -82,7 +95,7 @@ class MassiveDataSource(MarketDataSource):
 
     async def _poll_loop(self) -> None:
         """Poll on interval. First poll already happened in start()."""
-        while True:
+        while not self._failed:
             await asyncio.sleep(self._interval)
             await self._poll_once()
 
@@ -116,9 +129,17 @@ class MassiveDataSource(MarketDataSource):
             logger.debug("Massive poll: updated %d/%d tickers", processed, len(self._tickers))
 
         except Exception as e:
-            logger.error("Massive poll failed: %s", e)
-            # Don't re-raise — the loop will retry on the next interval.
-            # Common failures: 401 (bad key), 429 (rate limit), network errors.
+            # Any failure to fetch (401/403 auth, 429 rate limit, network error,
+            # 5xx/other service error, or the current 404) is treated as permanent
+            # per PLAN.md section 6: log it, stop polling Massive for good, and
+            # hand our tracked tickers to the simulator. Never retry Massive
+            # again this run.
+            logger.error(
+                "Massive poll failed permanently, failing over to simulator: %s", e
+            )
+            self._failed = True
+            if self._on_permanent_failure is not None:
+                await self._on_permanent_failure(list(self._tickers))
 
     def _fetch_snapshots(self) -> list:
         """Synchronous call to the Massive REST API. Runs in a thread."""

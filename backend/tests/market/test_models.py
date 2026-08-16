@@ -64,7 +64,7 @@ class TestPriceUpdate:
         assert result["ticker"] == "AAPL"
         assert result["price"] == 190.50
         assert result["previous_price"] == 190.00
-        assert result["timestamp"] == 1234567890.0
+        assert result["timestamp"] == "2009-02-13T23:31:30+00:00"
         assert result["change"] == 0.50
         assert result["change_percent"] == 0.2632  # (0.50 / 190.00) * 100
         assert result["direction"] == "up"

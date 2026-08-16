@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import time
 from dataclasses import dataclass, field
+from datetime import UTC, datetime
 
 
 @dataclass(frozen=True, slots=True)
@@ -37,12 +38,13 @@ class PriceUpdate:
         return "flat"
 
     def to_dict(self) -> dict:
-        """Serialize for JSON / SSE transmission."""
+        """Serialize for JSON / SSE transmission. Timestamp goes out as an
+        ISO-8601 string, matching the frontend's PriceTick type."""
         return {
             "ticker": self.ticker,
             "price": self.price,
             "previous_price": self.previous_price,
-            "timestamp": self.timestamp,
+            "timestamp": datetime.fromtimestamp(self.timestamp, tz=UTC).isoformat(),
             "change": self.change,
             "change_percent": self.change_percent,
             "direction": self.direction,

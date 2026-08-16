@@ -1,0 +1,50 @@
+"""SQLite persistence layer for FinAlly."""
+
+from .connection import database_path, get_connection, get_db, initialize_database
+from .models import ChatMessage, PortfolioSnapshot, Position, Trade, WatchlistEntry
+from .queries import (
+    DEFAULT_USER_ID,
+    add_watchlist_ticker,
+    delete_position,
+    get_cash_balance,
+    get_position,
+    insert_chat_message,
+    insert_snapshot,
+    insert_trade,
+    list_positions,
+    list_recent_chat_messages,
+    list_snapshots,
+    list_trades,
+    list_watchlist,
+    remove_watchlist_ticker,
+    update_cash_balance,
+    upsert_position,
+)
+
+__all__ = [
+    "DEFAULT_USER_ID",
+    "ChatMessage",
+    "PortfolioSnapshot",
+    "Position",
+    "Trade",
+    "WatchlistEntry",
+    "add_watchlist_ticker",
+    "database_path",
+    "delete_position",
+    "get_cash_balance",
+    "get_connection",
+    "get_db",
+    "get_position",
+    "initialize_database",
+    "insert_chat_message",
+    "insert_snapshot",
+    "insert_trade",
+    "list_positions",
+    "list_recent_chat_messages",
+    "list_snapshots",
+    "list_trades",
+    "list_watchlist",
+    "remove_watchlist_ticker",
+    "update_cash_balance",
+    "upsert_position",
+]

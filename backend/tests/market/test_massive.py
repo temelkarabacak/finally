@@ -83,6 +83,66 @@ class TestMassiveDataSource:
 
         assert cache.get_price("AAPL") is None  # No update happened
 
+    async def test_api_error_sets_failed_and_invokes_callback(self):
+        """A poll failure (auth, rate limit, network, service error) is permanent:
+        it flips _failed and hands the tracked tickers to the failover callback,
+        per PLAN.md section 6."""
+        cache = PriceCache()
+        received: list[str] = []
+
+        async def on_permanent_failure(tickers: list[str]) -> None:
+            received.extend(tickers)
+
+        source = MassiveDataSource(
+            api_key="test-key",
+            price_cache=cache,
+            poll_interval=60.0,
+            on_permanent_failure=on_permanent_failure,
+        )
+        source._tickers = ["AAPL", "GOOGL"]
+        source._client = MagicMock()
+
+        with patch.object(source, "_fetch_snapshots", side_effect=Exception("404 not found")):
+            await source._poll_once()
+
+        assert source._failed is True
+        assert received == ["AAPL", "GOOGL"]
+
+    async def test_poll_loop_stops_after_failure(self):
+        """_poll_loop must not keep polling Massive once it has failed permanently."""
+        cache = PriceCache()
+        source = MassiveDataSource(api_key="test-key", price_cache=cache, poll_interval=0.01)
+        source._tickers = ["AAPL"]
+        source._client = MagicMock()
+
+        call_count = 0
+
+        def failing_fetch():
+            nonlocal call_count
+            call_count += 1
+            raise Exception("401 unauthorized")
+
+        with patch.object(source, "_fetch_snapshots", side_effect=failing_fetch):
+            await source._poll_loop()  # while-not-failed loop must exit after one failure
+
+        assert call_count == 1
+        assert source._failed is True
+
+    async def test_start_does_not_start_loop_when_initial_poll_fails(self):
+        """A failure on the immediate first poll in start() must not spin up
+        the recurring polling task at all — never retry Massive this run."""
+        cache = PriceCache()
+        source = MassiveDataSource(api_key="test-key", price_cache=cache, poll_interval=60.0)
+
+        with patch("app.market.massive_client.RESTClient"):
+            with patch.object(
+                source, "_fetch_snapshots", side_effect=Exception("503 service error")
+            ):
+                await source.start(["AAPL"])
+
+        assert source._failed is True
+        assert source._task is None
+
     async def test_timestamp_conversion(self):
         """Test that timestamps are converted from milliseconds to seconds."""
         cache = PriceCache()

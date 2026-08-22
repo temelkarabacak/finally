@@ -1,0 +1,135 @@
+# Requirements: FinAlly — AI Trading Workstation
+
+**Defined:** 2026-08-23
+**Core Value:** A user can launch the app with one command, watch live prices stream in, buy/sell shares instantly, and ask the AI assistant to analyze or trade on their behalf — and it just works, end to end, in a single Docker container.
+
+## v1 Requirements
+
+Requirements for this milestone (the whole remaining platform, per PLAN.md). Each maps to roadmap phases.
+
+### Foundation
+
+- [ ] **FOUND-01**: Backend exposes `GET /api/health` for health checks
+- [ ] **FOUND-02**: Backend lazily creates the SQLite schema and seeds default data (default user with $10,000 cash, 10 default watchlist tickers) on first run if `db/finally.db` doesn't exist or is empty
+- [ ] **FOUND-03**: FastAPI serves the built Next.js static export for all non-`/api/*` routes from a single port (8000)
+- [ ] **FOUND-04**: Market data source (simulator or Massive) starts at app startup, tracking the active ticker set (watchlist ∪ open positions)
+
+### Watchlist
+
+- [ ] **WATCH-01**: User can view current watchlist tickers with latest prices via `GET /api/watchlist`
+- [ ] **WATCH-02**: User can add a ticker to the watchlist via `POST /api/watchlist`
+- [ ] **WATCH-03**: User can remove a ticker via `DELETE /api/watchlist/{ticker}`; it keeps streaming if an open position still references it
+- [ ] **WATCH-04**: `GET /api/stream/prices` (SSE) pushes price updates for every ticker in watchlist ∪ open positions at ~500ms cadence
+
+### Portfolio & Trading
+
+- [ ] **PORT-01**: User can view portfolio (positions, cash balance, total value, unrealized P&L) via `GET /api/portfolio`
+- [ ] **PORT-02**: User can execute a market buy or sell order via `POST /api/portfolio/trade`, fractional share quantities supported
+- [ ] **PORT-03**: A buy is rejected outright (never clamped) when cash is insufficient; a sell is rejected outright when held quantity is insufficient
+- [ ] **PORT-04**: Portfolio value snapshots are recorded every 30 seconds and immediately after each trade, retrievable via `GET /api/portfolio/history`
+- [ ] **PORT-05**: Massive API failures (auth, rate limit, network, or service error) permanently fail the running app over to the simulator for the remainder of the run — never switches back
+
+### AI Chat
+
+- [ ] **CHAT-01**: User can send a message via `POST /api/chat` and receive one complete JSON response (message + executed actions) — no token streaming
+- [ ] **CHAT-02**: The LLM's response can include trades that auto-execute through the same validation as manual trades; results are reflected in the chat response
+- [ ] **CHAT-03**: The LLM's response can include watchlist changes that auto-execute
+- [ ] **CHAT-04**: Chat history (last 20 messages) persists across requests; the user's message is saved before the LLM call, the assistant's after successful completion
+- [ ] **CHAT-05**: A chat request that exceeds a 30-second LLM timeout aborts with a generic retry message and executes no trade; the failed attempt is not persisted to chat history
+- [ ] **CHAT-06**: When `LLM_MOCK=true`, the backend returns deterministic mock responses instead of calling OpenRouter
+
+### Frontend UI
+
+- [ ] **UI-01**: Watchlist grid shows ticker, current price, daily change %, and a sparkline accumulated from the SSE stream since page load
+- [ ] **UI-02**: Prices flash green (uptick) or red (downtick) with a fading CSS animation on change
+- [ ] **UI-03**: Clicking a watchlist ticker shows a larger price chart for that ticker in the main chart area
+- [ ] **UI-04**: Portfolio heatmap (treemap) sized by position weight, colored by P&L
+- [ ] **UI-05**: P&L line chart of total portfolio value over time
+- [ ] **UI-06**: Positions table (ticker, quantity, avg cost, current price, unrealized P&L, % change)
+- [ ] **UI-07**: Trade bar lets the user submit a buy or sell market order (ticker, quantity, buy/sell buttons)
+- [ ] **UI-08**: Docked/collapsible AI chat panel with loading state and inline trade/watchlist action confirmations
+- [ ] **UI-09**: Header shows live portfolio total value, connection status indicator (green/yellow/red dot), and cash balance
+- [ ] **UI-10**: Dark trading-terminal theme applied throughout (backgrounds, accent colors `#ecad0a`/`#209dd7`/`#753991`, price flash colors)
+
+### Testing
+
+- [ ] **TEST-01**: Backend unit tests cover portfolio trade execution, P&L calculation, and edge cases (insufficient cash/shares)
+- [ ] **TEST-02**: Backend unit tests cover LLM structured-output parsing, including malformed responses
+- [ ] **TEST-03**: Backend unit tests cover API route status codes and response shapes for portfolio/watchlist/chat
+- [ ] **TEST-04**: Frontend unit tests cover price flash animation, watchlist CRUD, portfolio calculations, and chat rendering/loading state
+- [ ] **TEST-05**: Playwright E2E suite (`test/`, `LLM_MOCK=true`) covers fresh start, watchlist add/remove, buy/sell, visualizations, AI chat, and SSE reconnection
+
+### Deployment
+
+- [ ] **DEPLOY-01**: Multi-stage Dockerfile builds the Next.js export and Python backend into a single image serving port 8000
+- [ ] **DEPLOY-02**: SQLite database persists via a volume-mounted `db/` directory across container restarts
+- [ ] **DEPLOY-03**: Idempotent start/stop scripts for macOS/Linux (`scripts/start_mac.sh`, `stop_mac.sh`) and Windows (`start_windows.ps1`, `stop_windows.ps1`)
+
+## v2 Requirements
+
+None — the full remaining platform is in scope for this milestone (per explicit user decision during initialization).
+
+## Out of Scope
+
+| Feature | Reason |
+|---------|--------|
+| Limit orders, order book, partial fills | Market orders only — dramatically simplifies portfolio math (PLAN.md §3) |
+| Multi-user support / authentication | Single hardcoded `user_id="default"`, no login; schema leaves room for it later |
+| WebSockets | SSE is simpler and sufficient for one-way price push |
+| Postgres or other server-based DB | SQLite is self-contained and sufficient for single-user |
+| Trade confirmation dialogs | Instant fill by design — zero stakes with simulated money |
+| Token-by-token LLM streaming | Cerebras inference is fast enough that a loading indicator suffices |
+| Terraform / cloud deployment (App Runner, Render) | Stretch goal only, not part of core build |
+
+## Traceability
+
+Populated during roadmap creation.
+
+| Requirement | Phase | Status |
+|-------------|-------|--------|
+| FOUND-01 | TBD | Pending |
+| FOUND-02 | TBD | Pending |
+| FOUND-03 | TBD | Pending |
+| FOUND-04 | TBD | Pending |
+| WATCH-01 | TBD | Pending |
+| WATCH-02 | TBD | Pending |
+| WATCH-03 | TBD | Pending |
+| WATCH-04 | TBD | Pending |
+| PORT-01 | TBD | Pending |
+| PORT-02 | TBD | Pending |
+| PORT-03 | TBD | Pending |
+| PORT-04 | TBD | Pending |
+| PORT-05 | TBD | Pending |
+| CHAT-01 | TBD | Pending |
+| CHAT-02 | TBD | Pending |
+| CHAT-03 | TBD | Pending |
+| CHAT-04 | TBD | Pending |
+| CHAT-05 | TBD | Pending |
+| CHAT-06 | TBD | Pending |
+| UI-01 | TBD | Pending |
+| UI-02 | TBD | Pending |
+| UI-03 | TBD | Pending |
+| UI-04 | TBD | Pending |
+| UI-05 | TBD | Pending |
+| UI-06 | TBD | Pending |
+| UI-07 | TBD | Pending |
+| UI-08 | TBD | Pending |
+| UI-09 | TBD | Pending |
+| UI-10 | TBD | Pending |
+| TEST-01 | TBD | Pending |
+| TEST-02 | TBD | Pending |
+| TEST-03 | TBD | Pending |
+| TEST-04 | TBD | Pending |
+| TEST-05 | TBD | Pending |
+| DEPLOY-01 | TBD | Pending |
+| DEPLOY-02 | TBD | Pending |
+| DEPLOY-03 | TBD | Pending |
+
+**Coverage:**
+- v1 requirements: 37 total
+- Mapped to phases: 0 (populated by roadmapper)
+- Unmapped: 37 ⚠️ (expected until roadmap is created)
+
+---
+*Requirements defined: 2026-08-23*
+*Last updated: 2026-08-23 after initial definition*

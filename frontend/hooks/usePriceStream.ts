@@ -14,6 +14,8 @@ export type PriceTick = {
 
 export type ConnectionState = "connecting" | "open" | "reconnecting" | "closed";
 
+export type ChartPoint = { time: number; value: number };
+
 const HISTORY_LIMIT = 120;
 
 /**
@@ -24,10 +26,12 @@ const HISTORY_LIMIT = 120;
 export function usePriceStream(): {
   prices: Record<string, PriceTick>;
   history: Record<string, number[]>;
+  timeline: Record<string, ChartPoint[]>;
   status: ConnectionState;
 } {
   const [prices, setPrices] = useState<Record<string, PriceTick>>({});
   const [history, setHistory] = useState<Record<string, number[]>>({});
+  const [timeline, setTimeline] = useState<Record<string, ChartPoint[]>>({});
   const [status, setStatus] = useState<ConnectionState>("connecting");
   const hasOpenedRef = useRef(false);
 
@@ -57,6 +61,29 @@ export function usePriceStream(): {
         }
         return next;
       });
+
+      // Lightweight Charts requires strictly ascending, unique time values.
+      // SSE frames arrive roughly every 500ms, so flooring to whole seconds
+      // produces duplicate and occasionally out-of-order seconds -- dedupe
+      // before appending rather than handing the library raw timestamps.
+      setTimeline((prev) => {
+        const next = { ...prev };
+        for (const [ticker, tick] of Object.entries(payload)) {
+          const existing = next[ticker] ?? [];
+          const flooredTime = Math.floor(tick.timestamp);
+          const last = existing[existing.length - 1];
+          let updated: ChartPoint[];
+          if (last && flooredTime === last.time) {
+            updated = [...existing.slice(0, -1), { time: flooredTime, value: tick.price }];
+          } else if (last && flooredTime < last.time) {
+            updated = existing;
+          } else {
+            updated = [...existing, { time: flooredTime, value: tick.price }];
+          }
+          next[ticker] = updated.slice(-HISTORY_LIMIT);
+        }
+        return next;
+      });
     });
 
     return () => {
@@ -64,5 +91,5 @@ export function usePriceStream(): {
     };
   }, []);
 
-  return { prices, history, status };
+  return { prices, history, timeline, status };
 }

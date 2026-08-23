@@ -422,7 +422,7 @@ app.frontend("/", directory="static", fallback="index.html")
 
 **If this table is empty:** N/A — see entries above; none are compliance/security-critical, all are technology-choice risks with cheap correction paths.
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **Should `db/finally.db` connections be pooled or opened per-request?**
    - What we know: SQLite + stdlib `sqlite3` connections are cheap to open; WAL mode allows concurrent readers with one writer.

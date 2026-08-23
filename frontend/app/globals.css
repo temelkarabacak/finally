@@ -1,27 +1,70 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+/*
+ * Trading terminal design tokens (planning/PLAN.md §2, §10).
+ * Consumed by every later UI phase -- token names are a contract, not decoration.
+ */
+@theme {
+  --color-terminal-bg: #0d1117; /* app background, the darkest surface */
+  --color-terminal-panel: #1a1a2e; /* panel / card surface */
+  --color-terminal-border: #30363d; /* muted gray border */
+  --color-terminal-text: #e6edf3; /* primary foreground */
+  --color-terminal-muted: #8b949e; /* secondary foreground */
+  --color-accent-yellow: #ecad0a; /* accent */
+  --color-accent-blue: #209dd7; /* primary */
+  --color-accent-purple: #753991; /* submit buttons only */
+  --color-up: #3fb950; /* green, tuned for contrast on #0d1117 */
+  --color-down: #f85149; /* red, tuned for contrast on #0d1117 */
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-terminal-bg: #0d1117;
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --font-mono:
+    ui-monospace, "SFMono-Regular", Menlo, Consolas, "Liberation Mono", monospace;
 }
 
 body {
   background: var(--color-terminal-bg);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  color: var(--color-terminal-text);
+}
+
+/*
+ * Price flash: a single fade from a low-alpha tint to transparent, never a
+ * repeat or a loop, so ten simultaneously-updating rows cannot read as a
+ * strobe. Row background only -- page/panel surfaces are untouched.
+ */
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes flash-up {
+    from {
+      background-color: color-mix(in srgb, var(--color-up) 35%, transparent);
+    }
+    to {
+      background-color: transparent;
+    }
+  }
+
+  @keyframes flash-down {
+    from {
+      background-color: color-mix(in srgb, var(--color-down) 35%, transparent);
+    }
+    to {
+      background-color: transparent;
+    }
+  }
+
+  .flash-up {
+    animation: flash-up 500ms ease-out;
+  }
+
+  .flash-down {
+    animation: flash-down 500ms ease-out;
+  }
+}
+
+/* Reduced motion: keep the color communication, drop the animated fade. */
+@media (prefers-reduced-motion: reduce) {
+  .flash-up {
+    background-color: color-mix(in srgb, var(--color-up) 35%, transparent);
+  }
+
+  .flash-down {
+    background-color: color-mix(in srgb, var(--color-down) 35%, transparent);
+  }
 }

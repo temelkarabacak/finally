@@ -8,8 +8,15 @@ from pathlib import Path
 
 from fastapi import FastAPI
 
-from app.db import get_active_tickers, get_db, get_watchlist_tickers, init_db
-from app.market import PriceCache, create_market_data_source, create_stream_router
+from app.db import get_active_tickers, get_db, init_db
+from app.market import (
+    FailoverMarketDataSource,
+    PriceCache,
+    create_market_data_source,
+    create_stream_router,
+)
+from app.market.massive_client import MassiveDataSource
+from app.watchlist import create_watchlist_router
 
 logger = logging.getLogger(__name__)
 
@@ -46,49 +53,20 @@ app = FastAPI(lifespan=lifespan, title="FinAlly")
 
 @app.get("/api/health")
 async def health() -> dict:
-    """Liveness probe. Read-only: touches neither the database nor the source."""
-    return {"status": "ok"}
+    """Liveness probe. Read-only: touches neither the database nor the source.
 
-
-@app.get("/api/watchlist")
-async def get_watchlist() -> list[dict]:
-    """Return watchlist tickers with their latest cached prices.
-
-    Plan 01-02 moves this into app/watchlist/router.py and adds the
-    mutation routes (POST/DELETE).
+    Reports which market data source is currently active — read through
+    FailoverMarketDataSource.active when the source is wrapped, so a
+    completed failover is reported honestly instead of still claiming the
+    provider it started with. Never reports the API key, a file path, or a
+    version.
     """
-    conn = get_db()
-    tickers = get_watchlist_tickers(conn)
-
-    result = []
-    for ticker in tickers:
-        update = cache.get(ticker)
-        if update is None:
-            result.append(
-                {
-                    "ticker": ticker,
-                    "price": None,
-                    "previous_price": None,
-                    "change": None,
-                    "change_percent": None,
-                    "direction": None,
-                }
-            )
-        else:
-            data = update.to_dict()
-            result.append(
-                {
-                    "ticker": data["ticker"],
-                    "price": data["price"],
-                    "previous_price": data["previous_price"],
-                    "change": data["change"],
-                    "change_percent": data["change_percent"],
-                    "direction": data["direction"],
-                }
-            )
-    return result
+    active_source = source.active if isinstance(source, FailoverMarketDataSource) else source
+    market_source = "massive" if isinstance(active_source, MassiveDataSource) else "simulator"
+    return {"status": "ok", "market_source": market_source}
 
 
+app.include_router(create_watchlist_router(get_db, source, cache))
 app.include_router(create_stream_router(cache))
 
 # Registered last: /api/* routes above always win because FastAPI resolves

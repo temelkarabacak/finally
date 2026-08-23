@@ -34,7 +34,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   4. The entire interface renders in the dark trading-terminal theme (`#0d1117`/`#1a1a2e` backgrounds, accent yellow `#ecad0a`, blue `#209dd7`, purple `#753991`)
   5. `GET /api/health` reports healthy, and prices keep streaming even when the Massive provider is misconfigured or fails mid-run — the app falls over to the simulator permanently and never switches back
 
-**Plans**: 1/3 plans executed
+**Plans**: 2/3 plans executed
 
 Plans:
 **Wave 1**
@@ -43,7 +43,7 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 01-02-PLAN.md — Editable watchlist (add/remove end to end) and permanent Massive failover to the simulator (WATCH-02, WATCH-03, PORT-05)
+- [x] 01-02-PLAN.md — Editable watchlist (add/remove end to end) and permanent Massive failover to the simulator (WATCH-02, WATCH-03, PORT-05)
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
@@ -131,7 +131,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Live Market Terminal | 1/3 | In Progress|  |
+| 1. Live Market Terminal | 2/3 | In Progress|  |
 | 2. Portfolio & Trading | 0/TBD | Not started | - |
 | 3. AI Copilot | 0/TBD | Not started | - |
 | 4. One-Command Deployment | 0/TBD | Not started | - |

@@ -54,9 +54,9 @@ if [ "${READY}" -ne 1 ]; then
     exit 1
 fi
 
-echo "==> Assert: GET /api/health returns {\"status\": \"ok\"}"
+echo "==> Assert: GET /api/health returns ok status and simulator market_source"
 HEALTH_BODY="$(curl -sf http://127.0.0.1:8000/api/health)"
-if [ "${HEALTH_BODY}" != '{"status":"ok"}' ]; then
+if [ "${HEALTH_BODY}" != '{"status":"ok","market_source":"simulator"}' ]; then
     echo "FAIL: unexpected /api/health body: ${HEALTH_BODY}"
     exit 1
 fi

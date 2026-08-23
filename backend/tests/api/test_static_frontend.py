@@ -48,7 +48,9 @@ class TestStaticFrontend:
     def test_api_health_answers_when_static_has_no_index(self, empty_static_dir, client):
         response = client.get("/api/health")
         assert response.status_code == 200
-        assert response.json() == {"status": "ok"}
+        body = response.json()
+        assert body["status"] == "ok"
+        assert body["market_source"] == "simulator"
 
     def test_root_serves_index_html_when_present(self, static_dir_with_index, client):
         marker = static_dir_with_index

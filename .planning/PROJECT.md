@@ -17,21 +17,23 @@ A user can launch the app with one command, watch live prices stream in, buy/sel
 - ✓ SSE price streaming endpoint factory — existing, `backend/app/market/stream.py`
 - ✓ Correlated GBM price simulation with occasional shock events — existing, `backend/app/market/simulator.py`
 - ✓ Full test coverage for the market data subsystem — existing, `backend/tests/market/`
+- ✓ FastAPI app entry point wiring together market data, DB, and static frontend serving — Phase 1, `backend/app/main.py`
+- ✓ SQLite schema with lazy initialization and seed data (all six tables; `positions`/`trades`/`portfolio_snapshots`/`chat_messages` stay empty until later phases) — Phase 1, `backend/app/db/`
+- ✓ Manual watchlist management (add/remove tickers, GET with live prices) — Phase 1, `backend/app/watchlist/router.py`; AI-driven watchlist changes still pending (Phase 3)
+- ✓ Massive API permanent failover to simulator on auth/rate-limit/network/service errors (never switches back) — Phase 1, `backend/app/market/failover.py`
+- ✓ Watchlist grid with price flash animations + progressive sparklines, main price chart (Lightweight Charts) for the selected ticker — Phase 1, `frontend/components/{WatchlistPanel,Sparkline,PriceChart}.tsx`
+- ✓ Dark trading-terminal theme (`#0d1117`/`#1a1a2e` backgrounds, accent yellow `#ecad0a`, blue `#209dd7`, purple `#753991`) — Phase 1, `frontend/app/globals.css`; human-verified against all 9 checkpoint items
 
 ### Active
 
-Full remaining platform from `planning/PLAN.md`, structured as vertical MVP slices (each phase delivers an end-to-end user capability, not just a technical layer):
+Remaining platform from `planning/PLAN.md`, structured as vertical MVP slices (each phase delivers an end-to-end user capability, not just a technical layer):
 
-- [ ] FastAPI app entry point wiring together market data, DB, and static frontend serving
-- [ ] SQLite schema with lazy initialization and seed data (users_profile, watchlist, positions, trades, portfolio_snapshots, chat_messages)
-- [ ] Watchlist management (add/remove tickers, GET with live prices) — manual and AI-driven
 - [ ] Portfolio endpoints: positions, cash, P&L, trade execution (market orders, fractional shares, buy/sell validation)
 - [ ] Portfolio value snapshot recording (every 30s + after each trade) for the P&L chart
+- [ ] AI-driven watchlist changes (via LLM chat, on top of Phase 1's manual CRUD)
 - [ ] LLM chat integration via LiteLLM → OpenRouter (Cerebras inference, `openai/gpt-oss-120b`), structured output schema, auto-executed trades/watchlist changes, 30s timeout with generic retry message, mock mode (`LLM_MOCK=true`) for tests
-- [ ] Massive API permanent failover to simulator on auth/rate-limit/network/service errors (never switches back)
-- [ ] Next.js (TypeScript, static export) frontend: watchlist grid with flash animations + sparklines, main chart, portfolio heatmap (treemap), P&L line chart, positions table, trade bar, AI chat panel, header with connection status
-- [ ] Dark trading-terminal theme (`#0d1117`/`#1a1a2e` backgrounds, accent yellow `#ecad0a`, blue `#209dd7`, purple `#753991`)
-- [ ] Backend unit tests (pytest) for portfolio, LLM, API routes beyond what market data already has
+- [ ] Portfolio heatmap (treemap), P&L line chart, positions table, trade bar, AI chat panel, header with connection status and live portfolio value
+- [ ] Backend unit tests (pytest) for portfolio, LLM, API routes beyond what market data and Phase 1 already have
 - [ ] Frontend unit tests (React Testing Library or similar)
 - [ ] Playwright E2E tests in `test/` (docker-compose.test.yml) covering fresh start, watchlist CRUD, buy/sell, visualizations, AI chat, SSE reconnection
 - [ ] Multi-stage Dockerfile (Node build → Python runtime), single port 8000, volume-mounted SQLite
@@ -72,6 +74,11 @@ Full remaining platform from `planning/PLAN.md`, structured as vertical MVP slic
 | Build the entire remaining platform in one roadmap (not a narrower slice) | User wants the full capstone scope covered in this cycle | — Pending |
 | Vertical MVP phase structure over Horizontal Layers | Backend layers (DB/portfolio/chat) are tightly coupled through shared tables; slicing by user capability avoids half-finished layers | — Pending |
 | Docker containerization as the final phase, not deferred | Milestone isn't "done" without a working single-command deployment | — Pending |
+| FastAPI floor bumped to `>=0.138.0` | `app.frontend()` (single-port static+API serving) requires it; installed 0.128.7 predates the method | Shipped — Phase 1 |
+| `httpx` added as backend dev dependency | Starlette's `TestClient` requires it; surfaced by the framework's own import error, not discretionary | Shipped — Phase 1 |
+| `FailoverMarketDataSource` does a lock-guarded, idempotent, one-way swap to the simulator on first Massive error | Matches PLAN.md §6's "permanent failover, never switches back" contract; avoids flapping between sources | Shipped — Phase 1 |
+| Dark theme tokens locked: up `#3fb950`, down `#f85149`, border `#30363d`, text `#e6edf3`, muted `#8b949e`; charting via `lightweight-charts@5.2.1` | Human-verified live against all 9 checkpoint items (theme, flash calmness, reduced-motion, sparklines, chart) | Shipped — Phase 1 |
+| Accepted npm registry's `react`/`react-dom` repo listing as `github.com/react/react` (not the historical `facebook/react`) as a legitimate org migration | Verified via live registry lookup before any install; no `[SLOP]` verdict, versions matched RESEARCH.md's audit exactly | Shipped — Phase 1 |
 
 ## Evolution
 
@@ -91,4 +98,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-08-23 after initialization*
+*Last updated: 2026-08-23 after Phase 1*

@@ -23,7 +23,7 @@ progress:
 See: .planning/PROJECT.md (updated 2026-08-23)
 
 **Core value:** A user can launch the app with one command, watch live prices stream in, buy/sell shares instantly, and ask the AI assistant to analyze or trade on their behalf — and it just works, end to end, in a single Docker container.
-**Current focus:** Phase 01 — Live Market Terminal
+**Current focus:** Phase 2 — Portfolio & Trading
 
 ## Current Position
 
@@ -62,9 +62,9 @@ Progress: [░░░░░░░░░░] 0%
 Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
-- [Init]: Build the entire remaining platform in one milestone — full capstone scope, no narrower slice
-- [Init]: Vertical MVP phase structure over Horizontal Layers — DB/portfolio/chat are tightly coupled through shared tables
-- [Init]: Docker containerization is the final phase (Phase 4), not deferred to a later milestone
+- [Phase 1]: `FailoverMarketDataSource` does a lock-guarded, idempotent, one-way swap to the simulator on first Massive error — never switches back
+- [Phase 1]: Dark theme tokens and `lightweight-charts@5.2.1` locked in, human-verified against all 9 checkpoint items
+- [Phase 1]: FastAPI floor bumped to `>=0.138.0` for `app.frontend()` single-port serving
 - [Roadmap]: PORT-05 (Massive permanent failover) assigned to Phase 1 rather than Phase 2 — it is market-data resilience, belonging with the phase that first wires a data source into a running app
 - [Roadmap]: TEST-03/TEST-04 assigned to Phase 3 — they span routes and components from Phases 1-2, but land with `LLM_MOCK` which makes the suites fast and offline
 
@@ -74,9 +74,10 @@ None yet.
 
 ### Blockers/Concerns
 
-- [Phase 1]: No FastAPI entry point exists (`backend/app/__init__.py` is minimal, no `main.py`) — the backend cannot run at all until Phase 1 builds it
-- [Phase 1]: `frontend/` is empty — Next.js project must be scaffolded from scratch with `output: 'export'`
-- [Phase 1]: Massive failover is unimplemented; `massive_client.py` currently retries indefinitely on error instead of failing over permanently (see `.planning/codebase/CONCERNS.md`)
+- [Phase 1, non-blocking]: `npm run lint` fails on 2 `react-hooks/set-state-in-effect` errors in `WatchlistPanel.tsx:60,77` — not caught by `next build`/`tsc --noEmit`; see `01-REVIEW.md`
+- [Phase 1, non-blocking]: `FailoverMarketDataSource`'s Massive→simulator swap has an unsynchronized read race on `_active`, and `MassiveDataSource.stop()`'s self-cancellation relies on asyncio scheduling order rather than a guaranteed contract; both currently work but are worth hardening
+- [Phase 1, non-blocking]: Watchlist router doesn't guard a market-source exception thrown after the DB write already succeeded (partial-failure edge case)
+- [Phase 4]: `scripts/smoke.sh`'s cleanup trap can hang indefinitely if an SSE connection is still open when it sends SIGTERM to uvicorn — surfaced twice during Phase 1 (manual run + verifier run, both needed a manual force-kill). Worth fixing before Docker/E2E lifecycle management is built on top of it
 - [Phase 2]: SQLite allows one writer at a time; the 30s snapshot task, trade writes, and chat writes need serialized access (WAL mode or a write queue)
 - [Phase 3]: `litellm` and `pydantic` are not in `backend/pyproject.toml` — must be added via `uv add` before the LLM module can be built
 
@@ -90,6 +91,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-08-23T07:17:09.660Z
-Stopped at: Phase 01 complete, ready to plan Phase 2
-Resume file: .planning/phases/01-live-market-terminal/01-CONTEXT.md
+Last session: 2026-08-23T18:35:13.169Z
+Stopped at: Phase 1 complete, ready to plan Phase 2
+Resume file: None

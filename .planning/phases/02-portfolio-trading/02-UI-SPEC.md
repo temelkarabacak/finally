@@ -35,13 +35,13 @@ Declared values (multiples of 4, matching Tailwind's default scale already in us
 |-------|-------|-------|
 | xs | 4px | `py-1` button vertical padding, icon/glyph gaps |
 | sm | 8px | `gap-2`, `px-2` — compact element spacing, input padding |
-| md | 12px | `p-3` — **established panel padding** (WatchlistPanel, PriceChart); new Phase 2 panels (PositionsTable, PortfolioHeatmap, PnlChart, TradeBar) reuse `p-3`, not the generic 16px default |
+| md | 12px — **locked exception, not on the standard 4/8/16/24/32/48/64 scale** | `p-3` panel padding (WatchlistPanel, PriceChart — already shipped Phase 1) and submit-button `px-3 py-1` padding (Add, and now Buy/Sell). Locked because it must exactly match already-shipped, human-verified Phase 1 CSS; changing it now would visually regress `WatchlistPanel`/`PriceChart` outside this phase's scope. This is a deliberate, permanent extension of the 8-point scale for this one established value, not an oversight — no other non-standard value is permitted. |
 | lg | 16px | `gap-4` — layout gaps between grid panels, `p-6` page padding uses 24px (below) |
 | xl | 24px | `p-6` page-level padding (`main` in `page.tsx`) |
 | 2xl | 48px | Reserved, no current usage |
 | 3xl | 64px | Reserved, no current usage |
 
-Exceptions: Buy/Sell and Add-style submit buttons use `px-3 py-1` (12px × 4px) — a ~28px-tall hit target, below the 44px touch-target guideline. This is a deliberate carry-forward of Phase 1's `WatchlistPanel` Add-button precedent for a desktop-first, data-dense terminal UI (per `planning/PLAN.md` §10, "Responsive but desktop-first"). No new touch-target exception is introduced beyond this existing one.
+Exceptions: Buy/Sell and Add-style submit buttons use `px-3 py-1` (12px × 4px, the `md` locked exception above) — a ~28px-tall hit target, below the 44px touch-target guideline. This is a deliberate carry-forward of Phase 1's `WatchlistPanel` Add-button precedent for a desktop-first, data-dense terminal UI (per `planning/PLAN.md` §10, "Responsive but desktop-first"). No new touch-target exception is introduced beyond this existing one.
 
 ---
 
@@ -105,7 +105,7 @@ Accent reserved for: brand title, panel section-title labels only — never butt
 
 | Element | Copy |
 |---------|------|
-| Primary CTA | Trade bar has two: **Buy** and **Sell** — verb-only labels (ticker/quantity context is already visible in the adjacent fields); no "Buy Shares" / "Place Order" wording |
+| Primary CTA | Trade bar has two: **Buy** and **Sell** — verb-only labels, no "Buy Shares" / "Place Order" wording |
 | Empty state heading (Positions Table, D-01) | "No positions yet" |
 | Empty state body (Positions Table, D-01) | "Buy shares to get started." |
 | Empty state heading (Heatmap, D-02) | "No positions yet" (identical to Positions Table, per D-02's "same empty-state message pattern") |
@@ -119,6 +119,8 @@ Accent reserved for: brand title, panel section-title labels only — never butt
 | Destructive confirmation | **None.** Per `planning/PLAN.md` §2/§9 explicit design choice, trades and watchlist removal execute instantly with zero confirmation dialogs anywhere in this phase (simulated money, zero stakes) — there is no destructive-action copy to write. |
 
 Copy is terse, terminal-appropriate (lowercase-first sentence fragments, no exclamation points), matching Phase 1's `errorMessage` tone (e.g. "{ticker} is already on the watchlist"). Exact wording remains open to minor refinement during implementation per 02-CONTEXT.md, provided it keeps this tone and states the reason + next step.
+
+**Resolved exception — "Buy"/"Sell" single-word CTAs:** These labels are single words without a noun, which technically triggers the copywriting FLAG criterion ("single word without a noun"). This is a deliberate, resolved exception, not an oversight: the verb reads unambiguously because it sits directly beside the always-visible Ticker and Quantity fields in the trade bar (per the Layout & Composition section above), so the noun is supplied by the adjacent form context rather than by the button label itself. "Buy Shares" / "Sell Shares" was considered and rejected as redundant given that context.
 
 ---
 

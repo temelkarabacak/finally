@@ -1,10 +1,11 @@
 ---
 phase: 1
 slug: live-market-terminal
-status: draft
-nyquist_compliant: false
+status: mapped-to-plans
+nyquist_compliant: true
 wave_0_complete: false
 created: 2026-08-23
+updated: 2026-08-23
 ---
 
 # Phase 1 — Validation Strategy
@@ -40,15 +41,24 @@ Frontend has no test framework yet — `frontend/` is empty and TEST-04 (fronten
 
 | Task ID | Plan | Wave | Requirement | Threat Ref | Secure Behavior | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|------------|-----------------|-----------|-------------------|-------------|--------|
-| 01-01-01 | 01 | 0 | FOUND-01 | — | N/A | integration | `pytest backend/tests/api/test_health.py -x` | ❌ W0 | ⬜ pending |
-| 01-01-02 | 01 | 0 | FOUND-02 | — | N/A | unit | `pytest backend/tests/db/test_init.py -x` | ❌ W0 | ⬜ pending |
-| 01-01-03 | 01 | 0 | FOUND-03 | — | N/A | integration | `pytest backend/tests/api/test_static_frontend.py -x` | ❌ W0 | ⬜ pending |
-| 01-01-04 | 01 | 0 | FOUND-04 | — | N/A | integration | `pytest backend/tests/api/test_app_startup.py -x` | ❌ W0 | ⬜ pending |
-| 01-02-01 | 01 | 1 | WATCH-01/02/03 | — | N/A | unit + integration | `pytest backend/tests/watchlist/ -x` | ❌ W0 | ⬜ pending |
-| 01-02-02 | 01 | 1 | WATCH-04 | — | N/A | integration | `pytest backend/tests/market/test_stream.py -x` (extended) | ✅ (extend) | ⬜ pending |
-| 01-03-01 | 01 | 1 | PORT-05 | — | N/A | unit | `pytest backend/tests/market/test_failover.py -x` | ❌ W0 (new) | ⬜ pending |
-| 01-03-02 | 01 | 1 | PORT-05 (regression) | — | N/A | unit | `pytest backend/tests/market/test_factory.py -x` (updated) | ✅ (edit) | ⬜ pending |
-| 01-04-01 | 01 | 2 | UI-01/02/03/10 | — | N/A | manual | UAT / `/gsd-ui-review` | N/A | ⬜ pending |
+| 01-01-T1 | 01-01 | 1 | (supply chain) | T-01-SC | Package legitimacy confirmed before install | manual | blocking human checkpoint | N/A | ⬜ pending |
+| 01-01-T2 | 01-01 | 1 | FOUND-01..04, WATCH-01, WATCH-04 | T-01-01, T-01-03, T-01-04 | Parameterized SQL; no key in health/logs | e2e | `bash scripts/smoke.sh` | ❌ created by task | ⬜ pending |
+| 01-01-T3 | 01-01 | 1 | FOUND-01 | — | N/A | integration | `pytest backend/tests/api/test_health.py -x` | ❌ created by task | ⬜ pending |
+| 01-01-T3 | 01-01 | 1 | FOUND-02 | T-01-01 | Existing DB never re-seeded | unit | `pytest backend/tests/db/test_init.py backend/tests/db/test_seed.py -x` | ❌ created by task | ⬜ pending |
+| 01-01-T3 | 01-01 | 1 | FOUND-03 | T-01-03 | API routes take precedence over static fallback | integration | `pytest backend/tests/api/test_static_frontend.py -x` | ❌ created by task | ⬜ pending |
+| 01-01-T3 | 01-01 | 1 | FOUND-04 | — | Single shared PriceCache instance | integration | `pytest backend/tests/api/test_app_startup.py -x` | ❌ created by task | ⬜ pending |
+| 01-02-T1 | 01-02 | 2 | WATCH-02, WATCH-03 | T-01-08, T-01-09 | Parameterized SQL; structured 4xx, no stack traces | unit + integration | `pytest backend/tests/watchlist/ -x` | ❌ created by task | ⬜ pending |
+| 01-02-T2 | 01-02 | 2 | PORT-05 | T-01-11, T-01-12, T-01-13 | No key in logs; failover observable; poll loop stops | unit | `pytest backend/tests/market/test_failover.py -x` | ❌ created by task | ⬜ pending |
+| 01-02-T2 | 01-02 | 2 | PORT-05 (regression) | — | Factory wrapper on Massive branch only | unit | `pytest backend/tests/market/test_factory.py -x` (assertions updated) | ✅ (edit) | ⬜ pending |
+| 01-02-T1/T2 | 01-02 | 2 | WATCH-04 (regression) | — | N/A | integration | `pytest backend/tests/market/test_stream.py -x` | ✅ existing | ⬜ pending |
+| 01-03-T1 | 01-03 | 3 | UI-01, UI-02, UI-10 | T-01-14, T-01-15 | React-escaped rendering; bounded client buffers | build + e2e | `npm --prefix frontend run build && bash scripts/smoke.sh` | N/A | ⬜ pending |
+| 01-03-T2 | 01-03 | 3 | UI-03 | T-01-16 | Chart instances cleaned up on unmount | build + e2e | `npm --prefix frontend run build && bash scripts/smoke.sh` | N/A | ⬜ pending |
+| 01-03-T3 | 01-03 | 3 | UI-01/02/03/10 | T-01-17 | Simulated-data labelling verified visually | manual | blocking human checkpoint (9 items) | N/A | ⬜ pending |
+
+**Note:** there is no separate Wave 0 — each test file is created by the same task whose behavior it
+verifies, and every `<verify>` block in all three plans carries a runnable `<automated>` command. The
+`scripts/smoke.sh` end-to-end gate (created in 01-01 task 2) is re-run by every subsequent task, so no
+three consecutive tasks pass without automated feedback.
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 

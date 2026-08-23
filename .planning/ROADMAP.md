@@ -30,7 +30,13 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. Clicking a watchlist row shows a larger price chart for that ticker in the main chart area, and every row carries a sparkline accumulated from prices seen since page load
   4. The entire interface renders in the dark trading-terminal theme (`#0d1117`/`#1a1a2e` backgrounds, accent yellow `#ecad0a`, blue `#209dd7`, purple `#753991`)
   5. `GET /api/health` reports healthy, and prices keep streaming even when the Massive provider is misconfigured or fails mid-run — the app falls over to the simulator permanently and never switches back
-**Plans**: TBD
+**Plans**: 3 plans
+
+Plans:
+- [ ] 01-01-PLAN.md — Walking Skeleton: DB lazy init + seed, FastAPI entry point, static export served on 8000, live prices streaming (FOUND-01..04, WATCH-01, WATCH-04)
+- [ ] 01-02-PLAN.md — Editable watchlist (add/remove end to end) and permanent Massive failover to the simulator (WATCH-02, WATCH-03, PORT-05)
+- [ ] 01-03-PLAN.md — Terminal UI: dark theme, price flash, sparklines, per-ticker chart (UI-01, UI-02, UI-03, UI-10)
+
 **UI hint**: yes
 
 **Notes**:
@@ -100,7 +106,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Live Market Terminal | 0/TBD | Not started | - |
+| 1. Live Market Terminal | 0/3 | Planned | - |
 | 2. Portfolio & Trading | 0/TBD | Not started | - |
 | 3. AI Copilot | 0/TBD | Not started | - |
 | 4. One-Command Deployment | 0/TBD | Not started | - |

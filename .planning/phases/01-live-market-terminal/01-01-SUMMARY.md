@@ -215,6 +215,13 @@ None — no external service configuration required. `MASSIVE_API_KEY` and `OPEN
 - `backend/app/watchlist/` remains an empty placeholder — Plan 01-02 moves the `GET /api/watchlist` handler out of `main.py` into a proper router and adds `POST`/`DELETE`
 - No blockers identified for Plan 01-02
 
+## Self-Check: PASSED
+
+All 13 key files confirmed tracked in git (`git ls-files`): schema.sql, connection.py, seed.py,
+main.py, usePriceStream.ts, dev.sh, smoke.sh, test_init.py, test_seed.py, test_health.py,
+test_app_startup.py, test_static_frontend.py, and this SUMMARY.md. All three commits
+(`c4c3a2c`, `d00d869`, `7e0233e`) confirmed present in `git log --oneline --all`.
+
 ---
 *Phase: 01-live-market-terminal*
 *Completed: 2026-08-23*

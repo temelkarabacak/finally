@@ -8,8 +8,9 @@ from pathlib import Path
 
 from fastapi import FastAPI
 
-from app.db import get_active_tickers, get_db, get_watchlist_tickers, init_db
+from app.db import get_active_tickers, get_db, init_db
 from app.market import PriceCache, create_market_data_source, create_stream_router
+from app.watchlist import create_watchlist_router
 
 logger = logging.getLogger(__name__)
 
@@ -50,45 +51,7 @@ async def health() -> dict:
     return {"status": "ok"}
 
 
-@app.get("/api/watchlist")
-async def get_watchlist() -> list[dict]:
-    """Return watchlist tickers with their latest cached prices.
-
-    Plan 01-02 moves this into app/watchlist/router.py and adds the
-    mutation routes (POST/DELETE).
-    """
-    conn = get_db()
-    tickers = get_watchlist_tickers(conn)
-
-    result = []
-    for ticker in tickers:
-        update = cache.get(ticker)
-        if update is None:
-            result.append(
-                {
-                    "ticker": ticker,
-                    "price": None,
-                    "previous_price": None,
-                    "change": None,
-                    "change_percent": None,
-                    "direction": None,
-                }
-            )
-        else:
-            data = update.to_dict()
-            result.append(
-                {
-                    "ticker": data["ticker"],
-                    "price": data["price"],
-                    "previous_price": data["previous_price"],
-                    "change": data["change"],
-                    "change_percent": data["change_percent"],
-                    "direction": data["direction"],
-                }
-            )
-    return result
-
-
+app.include_router(create_watchlist_router(get_db, source, cache))
 app.include_router(create_stream_router(cache))
 
 # Registered last: /api/* routes above always win because FastAPI resolves

@@ -5,6 +5,8 @@ from __future__ import annotations
 import logging
 import os
 import sqlite3
+import uuid
+from datetime import UTC, datetime
 from pathlib import Path
 
 from .seed import DEFAULT_USER_ID, seed_defaults
@@ -90,3 +92,45 @@ def get_watchlist_tickers(conn: sqlite3.Connection, user_id: str = DEFAULT_USER_
         (user_id,),
     ).fetchall()
     return [row[0] for row in rows]
+
+
+def add_watchlist_ticker(
+    conn: sqlite3.Connection, ticker: str, user_id: str = DEFAULT_USER_ID
+) -> bool:
+    """Insert a watchlist row for ticker if not already present.
+
+    Relies on the UNIQUE(user_id, ticker) constraint via INSERT OR IGNORE
+    rather than a check-then-insert, so two concurrent adds converge on
+    exactly one row. Returns whether a row was actually inserted.
+    """
+    cursor = conn.execute(
+        "INSERT OR IGNORE INTO watchlist (id, user_id, ticker, added_at) VALUES (?, ?, ?, ?)",
+        (uuid.uuid4().hex, user_id, ticker, datetime.now(UTC).isoformat()),
+    )
+    return cursor.rowcount > 0
+
+
+def remove_watchlist_ticker(
+    conn: sqlite3.Connection, ticker: str, user_id: str = DEFAULT_USER_ID
+) -> bool:
+    """Delete a watchlist row for ticker. Returns whether a row was removed."""
+    cursor = conn.execute(
+        "DELETE FROM watchlist WHERE user_id = ? AND ticker = ?",
+        (user_id, ticker),
+    )
+    return cursor.rowcount > 0
+
+
+def ticker_has_open_position(
+    conn: sqlite3.Connection, ticker: str, user_id: str = DEFAULT_USER_ID
+) -> bool:
+    """Return whether the user holds a nonzero-quantity position in ticker.
+
+    Always False until Phase 2 introduces trades — the removal rule this
+    guards is correct before anything can exercise it.
+    """
+    row = conn.execute(
+        "SELECT 1 FROM positions WHERE user_id = ? AND ticker = ? AND quantity > 0 LIMIT 1",
+        (user_id, ticker),
+    ).fetchone()
+    return row is not None

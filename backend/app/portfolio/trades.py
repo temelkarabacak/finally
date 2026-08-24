@@ -21,6 +21,7 @@ window the transaction exists to close, so no asyncio.Lock is needed.
 from __future__ import annotations
 
 import logging
+import math
 import sqlite3
 import uuid
 from datetime import UTC, datetime
@@ -74,6 +75,11 @@ def execute_trade(
     balance or holding could afford.
     """
     ticker = normalize_ticker(ticker)
+
+    if side not in ("buy", "sell"):
+        raise TradeError(f"Invalid trade side {side!r}.", "invalid_side")
+    if not math.isfinite(quantity) or quantity <= 0:
+        raise TradeError("Quantity must be a positive, finite number.", "invalid_quantity")
 
     price = cache.get_price(ticker)
     if price is None:

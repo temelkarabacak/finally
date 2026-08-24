@@ -60,7 +60,9 @@ def compute_total_value(
     cash = conn.execute(
         "SELECT cash_balance FROM users_profile WHERE id = ?", (user_id,)
     ).fetchone()[0]
-    holdings_value = sum(view["market_value"] for view in position_views(conn, cache, user_id))
+    holdings_value = sum(
+        (view["market_value"] for view in position_views(conn, cache, user_id)), 0.0
+    )
     return round(cash + holdings_value, 2)
 
 
@@ -77,8 +79,8 @@ def portfolio_view(
         "SELECT cash_balance FROM users_profile WHERE id = ?", (user_id,)
     ).fetchone()[0]
     positions = position_views(conn, cache, user_id)
-    holdings_value = round(sum(view["market_value"] for view in positions), 2)
-    unrealized_pnl = round(sum(view["unrealized_pnl"] for view in positions), 2)
+    holdings_value = round(sum((view["market_value"] for view in positions), 0.0), 2)
+    unrealized_pnl = round(sum((view["unrealized_pnl"] for view in positions), 0.0), 2)
     total_value = round(cash + holdings_value, 2)
     return {
         "cash_balance": round(cash, 2),

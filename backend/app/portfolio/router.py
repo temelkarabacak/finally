@@ -80,7 +80,12 @@ def create_portfolio_router(
             raise HTTPException(status_code=400, detail=err.detail) from err
 
         if request.side == "buy":
-            await market_source.add_ticker(request.ticker)
+            try:
+                await market_source.add_ticker(request.ticker)
+            except Exception:
+                logger.exception(
+                    "add_ticker failed after a committed buy of %s", request.ticker
+                )
 
         return result
 

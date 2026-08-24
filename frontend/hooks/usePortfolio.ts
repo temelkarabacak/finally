@@ -22,6 +22,34 @@ export type PortfolioView = {
   positions: PositionView[];
 };
 
+export type PnlPoint = { time: number; value: number };
+
+type RawHistoryPoint = { time: number; value: number; recorded_at: string };
+
+/**
+ * Same floor-and-dedupe guard usePriceStream applies to its timeline buffer:
+ * the 30s recorder and a post-trade write can land in the same second by
+ * design (the dual trigger is intentional, see 02-RESEARCH.md Pitfall 5),
+ * and lightweight-charts rejects time values that are not strictly
+ * ascending and unique. This collapses at the chart boundary only --
+ * the underlying portfolio_snapshots rows are untouched.
+ */
+function collapseToChartPoints(raw: RawHistoryPoint[]): PnlPoint[] {
+  const points: PnlPoint[] = [];
+  for (const point of raw) {
+    const flooredTime = Math.floor(point.time);
+    const last = points[points.length - 1];
+    if (last && flooredTime === last.time) {
+      points[points.length - 1] = { time: flooredTime, value: point.value };
+    } else if (last && flooredTime < last.time) {
+      continue;
+    } else {
+      points.push({ time: flooredTime, value: point.value });
+    }
+  }
+  return points;
+}
+
 /**
  * Pure re-marking function: for each position, if a live SSE price exists
  * use it as current_price and recompute market_value/unrealized_pnl/percent
@@ -68,20 +96,27 @@ export function revalue(
 }
 
 /**
- * Fetches GET /api/portfolio once on mount and exposes a refresh callback
- * for the trade bar to call after a fill. Revalues the fetched portfolio
- * against the live SSE price map so the header and positions table move
- * with the stream instead of only after a trade.
+ * Fetches GET /api/portfolio and GET /api/portfolio/history once on mount
+ * and exposes a refresh callback for the trade bar to call after a fill, so
+ * a fill updates the header and the P&L chart in one pass. Revalues the
+ * fetched portfolio against the live SSE price map so the header and
+ * positions table move with the stream instead of only after a trade.
  */
 export function usePortfolio(prices: Record<string, PriceTick>): {
   portfolio: PortfolioView | null;
   error: string | null;
   loaded: boolean;
+  history: PnlPoint[];
+  historyError: string | null;
+  historyLoaded: boolean;
   refresh: () => Promise<void>;
 } {
   const [portfolio, setPortfolio] = useState<PortfolioView | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loaded, setLoaded] = useState(false);
+  const [history, setHistory] = useState<PnlPoint[]>([]);
+  const [historyError, setHistoryError] = useState<string | null>(null);
+  const [historyLoaded, setHistoryLoaded] = useState(false);
 
   const refresh = useCallback(async () => {
     try {
@@ -98,6 +133,22 @@ export function usePortfolio(prices: Record<string, PriceTick>): {
     } finally {
       setLoaded(true);
     }
+
+    try {
+      const response = await fetch("/api/portfolio/history");
+      if (!response.ok) {
+        setHistoryError("Could not load portfolio history");
+        return;
+      }
+      const data = (await response.json()) as RawHistoryPoint[];
+      setHistory(collapseToChartPoints(data));
+      setHistoryError(null);
+    } catch {
+      // Leave previously loaded points in place on a fetch failure.
+      setHistoryError("Could not load portfolio history");
+    } finally {
+      setHistoryLoaded(true);
+    }
   }, []);
 
   useEffect(() => {
@@ -109,5 +160,5 @@ export function usePortfolio(prices: Record<string, PriceTick>): {
     [portfolio, prices],
   );
 
-  return { portfolio: revalued, error, loaded, refresh };
+  return { portfolio: revalued, error, loaded, history, historyError, historyLoaded, refresh };
 }

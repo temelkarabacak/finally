@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 
+import { PnlChart } from "@/components/PnlChart";
 import { PriceChart } from "@/components/PriceChart";
 import { TradeBar } from "@/components/TradeBar";
 import { WatchlistPanel } from "@/components/WatchlistPanel";
@@ -18,7 +19,13 @@ const CONNECTION_DOT_COLOR: Record<string, string> = {
 export default function Home() {
   const { prices, history, timeline, status } = usePriceStream();
   const [selectedTicker, setSelectedTicker] = useState<string | null>(null);
-  const { portfolio, refresh } = usePortfolio(prices);
+  const {
+    portfolio,
+    history: pnlHistory,
+    historyError,
+    historyLoaded,
+    refresh,
+  } = usePortfolio(prices);
 
   const selectedPrice = selectedTicker ? prices[selectedTicker]?.price : undefined;
   const chartPoints = useMemo(
@@ -70,6 +77,15 @@ export default function Home() {
           onSelect={setSelectedTicker}
         />
         <PriceChart ticker={selectedTicker} points={chartPoints} />
+      </div>
+
+      {/*
+        Full-width row beneath the watchlist/chart grid, per 02-UI-SPEC.md
+        Layout & Composition. Plan 02-03 adds the positions table and
+        heatmap row between the grid above and this one.
+      */}
+      <div className="h-64">
+        <PnlChart points={pnlHistory} error={historyError} ready={historyLoaded} />
       </div>
     </main>
   );

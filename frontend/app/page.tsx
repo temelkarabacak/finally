@@ -3,6 +3,8 @@
 import { useMemo, useState } from "react";
 
 import { PnlChart } from "@/components/PnlChart";
+import { PortfolioHeatmap } from "@/components/PortfolioHeatmap";
+import { PositionsTable } from "@/components/PositionsTable";
 import { PriceChart } from "@/components/PriceChart";
 import { TradeBar } from "@/components/TradeBar";
 import { WatchlistPanel } from "@/components/WatchlistPanel";
@@ -21,6 +23,8 @@ export default function Home() {
   const [selectedTicker, setSelectedTicker] = useState<string | null>(null);
   const {
     portfolio,
+    error: portfolioError,
+    loaded: portfolioLoaded,
     history: pnlHistory,
     historyError,
     historyLoaded,
@@ -65,9 +69,7 @@ export default function Home() {
 
       {/*
         Desktop-first two-column layout: watchlist on the left, main chart
-        filling the rest. Structural room is left below for Phase 2's
-        positions table, heatmap, and P&L chart (planning/PLAN.md §10) --
-        not built here.
+        filling the rest (planning/PLAN.md §10).
       */}
       <div className="grid flex-1 grid-cols-1 gap-4 lg:grid-cols-[minmax(0,420px)_1fr]">
         <WatchlistPanel
@@ -80,9 +82,29 @@ export default function Home() {
       </div>
 
       {/*
-        Full-width row beneath the watchlist/chart grid, per 02-UI-SPEC.md
-        Layout & Composition. Plan 02-03 adds the positions table and
-        heatmap row between the grid above and this one.
+        Positions table and heatmap row, per 02-UI-SPEC.md Layout &
+        Composition -- same column template as the watchlist/chart grid so
+        the panels line up.
+      */}
+      <div className="grid h-72 grid-cols-1 gap-4 lg:grid-cols-[minmax(0,420px)_1fr]">
+        <PositionsTable
+          positions={portfolio?.positions ?? []}
+          loaded={portfolioLoaded}
+          error={portfolioError}
+          selected={selectedTicker}
+          onSelect={setSelectedTicker}
+        />
+        <PortfolioHeatmap
+          positions={portfolio?.positions ?? []}
+          loaded={portfolioLoaded}
+          selected={selectedTicker}
+          onSelect={setSelectedTicker}
+        />
+      </div>
+
+      {/*
+        Full-width row beneath the positions/heatmap grid, per 02-UI-SPEC.md
+        Layout & Composition.
       */}
       <div className="h-64">
         <PnlChart points={pnlHistory} error={historyError} ready={historyLoaded} />

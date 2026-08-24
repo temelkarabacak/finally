@@ -16,6 +16,7 @@ from app.market import (
     create_stream_router,
 )
 from app.market.massive_client import MassiveDataSource
+from app.portfolio import create_portfolio_router
 from app.watchlist import create_watchlist_router
 
 logger = logging.getLogger(__name__)
@@ -67,6 +68,7 @@ async def health() -> dict:
 
 
 app.include_router(create_watchlist_router(get_db, source, cache))
+app.include_router(create_portfolio_router(get_db, source, cache))
 app.include_router(create_stream_router(cache))
 
 # Registered last: /api/* routes above always win because FastAPI resolves

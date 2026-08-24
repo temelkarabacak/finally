@@ -97,16 +97,17 @@ export function PnlChart({ points, error, ready }: PnlChartProps) {
         </span>
         {error ? <span className="text-xs text-down">{error}</span> : null}
       </div>
-      {showEmptyState ? (
-        <div className="flex flex-1 flex-col items-center justify-center text-center text-terminal-muted">
-          <span className="text-sm font-semibold">Building portfolio history</span>
-          <span className="text-xs">
-            Chart appears once enough data points are recorded — usually within a minute.
-          </span>
-        </div>
-      ) : (
-        <div ref={containerRef} className="min-h-0 flex-1" />
-      )}
+      <div className="relative min-h-0 flex-1">
+        <div ref={containerRef} className="absolute inset-0" />
+        {showEmptyState ? (
+          <div className="absolute inset-0 flex flex-col items-center justify-center text-center text-terminal-muted">
+            <span className="text-sm font-semibold">Building portfolio history</span>
+            <span className="text-xs">
+              Chart appears once enough data points are recorded — usually within a minute.
+            </span>
+          </div>
+        ) : null}
+      </div>
     </div>
   );
 }

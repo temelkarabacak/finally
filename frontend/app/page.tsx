@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 
 import { PnlChart } from "@/components/PnlChart";
+import { PortfolioHeatmap } from "@/components/PortfolioHeatmap";
 import { PositionsTable } from "@/components/PositionsTable";
 import { PriceChart } from "@/components/PriceChart";
 import { TradeBar } from "@/components/TradeBar";
@@ -68,9 +69,7 @@ export default function Home() {
 
       {/*
         Desktop-first two-column layout: watchlist on the left, main chart
-        filling the rest. Structural room is left below for Phase 2's
-        positions table, heatmap, and P&L chart (planning/PLAN.md §10) --
-        not built here.
+        filling the rest (planning/PLAN.md §10).
       */}
       <div className="grid flex-1 grid-cols-1 gap-4 lg:grid-cols-[minmax(0,420px)_1fr]">
         <WatchlistPanel
@@ -85,9 +84,9 @@ export default function Home() {
       {/*
         Positions table and heatmap row, per 02-UI-SPEC.md Layout &
         Composition -- same column template as the watchlist/chart grid so
-        the panels line up. The heatmap fills in during Task 3.
+        the panels line up.
       */}
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,420px)_1fr]">
+      <div className="grid h-72 grid-cols-1 gap-4 lg:grid-cols-[minmax(0,420px)_1fr]">
         <PositionsTable
           positions={portfolio?.positions ?? []}
           loaded={portfolioLoaded}
@@ -95,7 +94,12 @@ export default function Home() {
           selected={selectedTicker}
           onSelect={setSelectedTicker}
         />
-        <div className="h-72 rounded border border-terminal-border bg-terminal-panel" />
+        <PortfolioHeatmap
+          positions={portfolio?.positions ?? []}
+          loaded={portfolioLoaded}
+          selected={selectedTicker}
+          onSelect={setSelectedTicker}
+        />
       </div>
 
       {/*

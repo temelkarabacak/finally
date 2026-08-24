@@ -62,7 +62,10 @@ export function TradeBar({ selectedTicker, onTraded }: TradeBarProps) {
 
   return (
     <section className="flex flex-col gap-2 rounded border border-terminal-border bg-terminal-panel p-3">
-      <form className="flex items-center gap-2">
+      <form
+        className="flex items-center gap-2"
+        onSubmit={(event) => event.preventDefault()}
+      >
         <input
           value={ticker}
           onChange={(event) => setTicker(event.target.value.toUpperCase())}

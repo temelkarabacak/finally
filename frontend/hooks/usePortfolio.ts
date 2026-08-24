@@ -123,11 +123,11 @@ export function usePortfolio(prices: Record<string, PriceTick>): {
       const response = await fetch("/api/portfolio");
       if (!response.ok) {
         setError("Could not load portfolio");
-        return;
+      } else {
+        const data = (await response.json()) as PortfolioView;
+        setPortfolio(data);
+        setError(null);
       }
-      const data = (await response.json()) as PortfolioView;
-      setPortfolio(data);
-      setError(null);
     } catch {
       setError("Could not load portfolio");
     } finally {

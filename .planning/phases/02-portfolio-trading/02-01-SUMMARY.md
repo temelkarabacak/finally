@@ -194,6 +194,12 @@ None - no external service configuration required.
 ## Next Phase Readiness
 `backend/app/portfolio/valuation.py`'s `compute_total_value`/`record_snapshot` are ready for Plan 02-02's 30-second background snapshot loop and `GET /api/portfolio/history` endpoint — both were deliberately left as thin, transaction-agnostic building blocks per the plan's interface contract. `TradeBar`/`usePortfolio`'s `selectedTicker` prefill wiring (D-07) and the blue selection-highlight convention (D-08) are ready for Plan 02-03's positions table and heatmap to plug into the same `page.tsx` state. No blockers identified.
 
+## Self-Check: PASSED
+
+All 10 created files verified present on disk (5 `backend/app/portfolio/` modules, 2
+`backend/tests/portfolio/` files, 2 frontend files, this SUMMARY.md). All 4 commits
+(`58b902d`, `a21aa56`, `cd21fb9`, `87078cf`) verified present in `git log`.
+
 ---
 *Phase: 02-portfolio-trading*
 *Completed: 2026-08-24*

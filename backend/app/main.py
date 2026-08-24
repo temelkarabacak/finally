@@ -16,7 +16,7 @@ from app.market import (
     create_stream_router,
 )
 from app.market.massive_client import MassiveDataSource
-from app.portfolio import create_portfolio_router
+from app.portfolio import create_portfolio_router, start_snapshot_task, stop_snapshot_task
 from app.watchlist import create_watchlist_router
 
 logger = logging.getLogger(__name__)
@@ -36,6 +36,11 @@ async def lifespan(app: FastAPI):
 
     await source.start(tickers)
 
+    # Started unconditionally, never gated on a first trade (D-04): a
+    # freshly launched app accumulates a flat $10,000 history from minute
+    # one regardless of whether the user has traded yet.
+    app.state.snapshot_task = start_snapshot_task(get_db, cache)
+
     app.state.cache = cache
     app.state.source = source
     app.state.db = conn
@@ -44,6 +49,9 @@ async def lifespan(app: FastAPI):
 
     yield
 
+    # Stopped before the source and the connection so the loop can never
+    # touch a closed connection or a stopped cache.
+    await stop_snapshot_task(app.state.snapshot_task)
     await source.stop()
     conn.close()
     logger.info("FinAlly backend shut down")

@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 
 import { PnlChart } from "@/components/PnlChart";
+import { PositionsTable } from "@/components/PositionsTable";
 import { PriceChart } from "@/components/PriceChart";
 import { TradeBar } from "@/components/TradeBar";
 import { WatchlistPanel } from "@/components/WatchlistPanel";
@@ -21,6 +22,8 @@ export default function Home() {
   const [selectedTicker, setSelectedTicker] = useState<string | null>(null);
   const {
     portfolio,
+    error: portfolioError,
+    loaded: portfolioLoaded,
     history: pnlHistory,
     historyError,
     historyLoaded,
@@ -80,9 +83,24 @@ export default function Home() {
       </div>
 
       {/*
-        Full-width row beneath the watchlist/chart grid, per 02-UI-SPEC.md
-        Layout & Composition. Plan 02-03 adds the positions table and
-        heatmap row between the grid above and this one.
+        Positions table and heatmap row, per 02-UI-SPEC.md Layout &
+        Composition -- same column template as the watchlist/chart grid so
+        the panels line up. The heatmap fills in during Task 3.
+      */}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,420px)_1fr]">
+        <PositionsTable
+          positions={portfolio?.positions ?? []}
+          loaded={portfolioLoaded}
+          error={portfolioError}
+          selected={selectedTicker}
+          onSelect={setSelectedTicker}
+        />
+        <div className="h-72 rounded border border-terminal-border bg-terminal-panel" />
+      </div>
+
+      {/*
+        Full-width row beneath the positions/heatmap grid, per 02-UI-SPEC.md
+        Layout & Composition.
       */}
       <div className="h-64">
         <PnlChart points={pnlHistory} error={historyError} ready={historyLoaded} />

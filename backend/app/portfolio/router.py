@@ -14,6 +14,7 @@ from pydantic import BaseModel, Field, field_validator
 from app.market import MarketDataSource, PriceCache
 from app.market.interface import normalize_ticker
 
+from .snapshots import get_snapshot_history
 from .trades import TradeError, execute_trade
 from .valuation import portfolio_view
 
@@ -55,6 +56,16 @@ def create_portfolio_router(
         """Return cash balance, positions, holdings value, total value, and unrealized P&L."""
         conn = get_conn()
         return portfolio_view(conn, price_cache)
+
+    @router.get("/history")
+    async def get_history() -> list[dict]:
+        """Return recorded portfolio value snapshots, oldest first.
+
+        200 with [] when nothing has been recorded yet -- an empty history
+        is a valid state, not a missing resource.
+        """
+        conn = get_conn()
+        return get_snapshot_history(conn)
 
     @router.post("/trade")
     async def trade(request: TradeRequest) -> dict:

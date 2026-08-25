@@ -18,6 +18,7 @@ from fastapi import APIRouter
 from app.market import MarketDataSource, PriceCache
 
 from .client import get_chat_response
+from .executor import execute_actions
 from .mock import mock_chat_response
 from .persistence import load_recent_chat_messages, save_chat_message
 from .prompt import SYSTEM_PROMPT, build_messages, build_portfolio_context
@@ -34,9 +35,9 @@ async def handle_chat_message(
     price_cache: PriceCache,
     user_text: str,
     mock: bool,
-) -> ChatResponse | None:
-    """One /api/chat turn. Returns None on timeout/malformed output -- the
-    caller returns the generic retry message and persists nothing further.
+) -> tuple[ChatResponse | None, dict | None]:
+    """One /api/chat turn. Returns (None, None) on timeout/malformed output --
+    the caller returns the generic retry message and persists nothing further.
     """
     start = time.monotonic()
 
@@ -64,25 +65,32 @@ async def handle_chat_message(
             duration_ms,
             mock,
         )
-        return None  # nothing further persisted (CHAT-05)
+        return None, None  # nothing further persisted (CHAT-05)
 
-    # 4. No executor yet in this task (plan 03-02 adds trade/watchlist
-    #    auto-execution) -- the actions payload is always empty here, and
-    #    it is built from execution results, never from parsed.trades, per
-    #    the execution-derived-action-reporting guardrail.
-    actions = {"trades": [], "watchlist_changes": []}
+    # 4. Auto-execute through the EXISTING validated code paths -- the
+    #    actions payload is built entirely from execute_actions()'s return
+    #    value, never echoed from the model's own proposed action lists,
+    #    per the execution-derived-action-reporting guardrail (T-03-11).
+    actions = await execute_actions(conn, price_cache, market_source, parsed)
 
     # 5. Persist the assistant turn + actions only after successful
     #    generation (CHAT-04/05).
     save_chat_message(conn, role="assistant", content=parsed.message, actions=actions)
 
+    n_trades = len(actions["trades"])
+    n_rejected = sum(1 for entry in actions["trades"] if not entry["success"])
+    n_watchlist = len(actions["watchlist_changes"])
+
     logger.info(
-        "chat turn outcome=%s duration_ms=%d mock=%s trades=0 rejected=0 watchlist=0",
+        "chat turn outcome=%s duration_ms=%d mock=%s trades=%d rejected=%d watchlist=%d",
         "ok",
         duration_ms,
         mock,
+        n_trades,
+        n_rejected,
+        n_watchlist,
     )
-    return parsed
+    return parsed, actions
 
 
 def create_chat_router(
@@ -101,17 +109,17 @@ def create_chat_router(
     @router.post("")
     async def post_chat(request: ChatRequest) -> dict:
         conn = get_conn()
-        result = await handle_chat_message(
+        parsed, actions = await handle_chat_message(
             conn, market_source, price_cache, request.message, mock
         )
-        if result is None:
+        if parsed is None:
             return {
                 "message": GENERIC_RETRY_MESSAGE,
                 "actions": {"trades": [], "watchlist_changes": []},
             }
         return {
-            "message": result.message,
-            "actions": {"trades": [], "watchlist_changes": []},
+            "message": parsed.message,
+            "actions": actions,
         }
 
     return router

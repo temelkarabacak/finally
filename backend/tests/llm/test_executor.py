@@ -33,13 +33,6 @@ def _insert_position(
     )
 
 
-def _insert_watchlist_ticker(conn: sqlite3.Connection, ticker: str) -> None:
-    conn.execute(
-        "INSERT INTO watchlist (id, user_id, ticker, added_at) VALUES (?, 'default', ?, ?)",
-        (uuid.uuid4().hex, ticker, datetime.now(UTC).isoformat()),
-    )
-
-
 @pytest.fixture
 def seeded_cache() -> PriceCache:
     cache = PriceCache()
@@ -123,8 +116,7 @@ class TestApplyWatchlistChange:
     async def test_add_already_present_rejected_without_source_call(
         self, initialized_db, market_source
     ):
-        _insert_watchlist_ticker(initialized_db, "AAPL")
-
+        # AAPL is already on the seeded default watchlist (app/db/seed.py).
         result = await apply_watchlist_change(
             initialized_db, market_source, WatchlistChange(ticker="AAPL", action="add")
         )
@@ -144,7 +136,7 @@ class TestApplyWatchlistChange:
     async def test_remove_with_open_position_succeeds_without_removing_from_source(
         self, initialized_db, market_source
     ):
-        _insert_watchlist_ticker(initialized_db, "META")
+        # META is already on the seeded default watchlist (app/db/seed.py).
         _insert_position(initialized_db, "META", 1.0, 400.0)
 
         result = await apply_watchlist_change(

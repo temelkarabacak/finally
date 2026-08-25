@@ -117,3 +117,52 @@ class TestHermeticityGuard:
     async def test_live_path_hits_blocked_litellm_completion(self):
         with pytest.raises(RuntimeError, match="litellm.completion"):
             await get_chat_response([{"role": "user", "content": "hi"}])
+
+
+class TestGetChatHistory:
+    """GET /api/chat/history: the transcript reader for the drawer (CHAT-04/05)."""
+
+    def test_empty_database_returns_200_and_empty_list(self, chat_client):
+        client, _conn, _source, _cache = chat_client
+
+        response = client.get("/api/chat/history")
+
+        assert response.status_code == 200
+        assert response.json() == []
+
+    def test_two_turns_returns_four_entries_oldest_first_with_actions(self, chat_client):
+        client, _conn, _source, _cache = chat_client
+
+        client.post("/api/chat", json={"message": "Analyze my portfolio"})
+        client.post("/api/chat", json={"message": "Buy 10 shares of AAPL"})
+
+        response = client.get("/api/chat/history")
+
+        assert response.status_code == 200
+        body = response.json()
+        assert len(body) == 4
+        assert [entry["role"] for entry in body] == ["user", "assistant", "user", "assistant"]
+        for entry in body:
+            assert set(entry.keys()) == {"role", "content", "actions"}
+        assert body[0]["actions"] is None  # user row
+        assert body[1]["actions"] == {"trades": [], "watchlist_changes": []}  # assistant row
+
+    def test_limit_1_returns_single_most_recent_message(self, chat_client):
+        client, _conn, _source, _cache = chat_client
+
+        client.post("/api/chat", json={"message": "Analyze my portfolio"})
+
+        response = client.get("/api/chat/history", params={"limit": 1})
+
+        assert response.status_code == 200
+        body = response.json()
+        assert len(body) == 1
+        assert body[0]["role"] == "assistant"
+
+    @pytest.mark.parametrize("limit", [0, -1, 500])
+    def test_out_of_range_limit_returns_422(self, chat_client, limit):
+        client, _conn, _source, _cache = chat_client
+
+        response = client.get("/api/chat/history", params={"limit": limit})
+
+        assert response.status_code == 422

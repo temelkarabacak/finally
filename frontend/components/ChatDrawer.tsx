@@ -5,14 +5,18 @@ import { useState, type FormEvent } from "react";
 import { ChatMessageList } from "@/components/ChatMessageList";
 import { useChat } from "@/hooks/useChat";
 
+type ChatDrawerProps = {
+  onActionsExecuted?: () => void | Promise<void>;
+};
+
 /**
  * Collapsed-by-default bottom-drawer overlay (D-01/D-02/D-03): a fixed
  * toggle pill plus a fixed-height panel that slides up over the trading
  * grid without reflowing it. See 03-UI-SPEC.md Layout & Composition.
  */
-export function ChatDrawer() {
+export function ChatDrawer({ onActionsExecuted }: ChatDrawerProps) {
   const [open, setOpen] = useState(false);
-  const { messages, draft, setDraft, sending, sendMessage } = useChat();
+  const { messages, draft, setDraft, sending, sendMessage } = useChat(onActionsExecuted);
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();

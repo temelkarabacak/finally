@@ -36,8 +36,12 @@ export type ChatMessage = {
  * message is appended optimistically; `draft` is cleared only on success
  * (D-10) so a failed turn leaves the typed text in place for a one-click
  * resend.
+ *
+ * `onActionsExecuted` is invoked after any turn whose actions.trades or
+ * actions.watchlist_changes is non-empty, so a chat-executed fill can
+ * refresh the same portfolio state a manual trade bar fill refreshes.
  */
-export function useChat(): {
+export function useChat(onActionsExecuted?: () => void | Promise<void>): {
   messages: ChatMessage[];
   draft: string;
   setDraft: (value: string) => void;
@@ -68,6 +72,12 @@ export function useChat(): {
           { role: "assistant", content: body.message, actions: body.actions },
         ]);
         setDraft("");
+
+        const hasExecutedActions =
+          body.actions.trades.length > 0 || body.actions.watchlist_changes.length > 0;
+        if (hasExecutedActions) {
+          await onActionsExecuted?.();
+        }
       } else {
         setMessages((prev) => [
           ...prev,

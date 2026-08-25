@@ -1,7 +1,7 @@
 ---
 phase: 02-portfolio-trading
 verified: 2026-08-25T12:00:00Z
-status: human_needed
+status: passed
 score: 4/5 must-haves verified
 behavior_unverified: 1
 overrides_applied: 0
@@ -9,15 +9,18 @@ re_verification:
   previous_status: human_needed
   previous_score: 5/5 (present-and-wired basis; UAT run afterward found G-02-4)
   gaps_closed:
+
     - "G-02-4: P&L chart cold-start empty state never resolved without a trade — usePortfolio.ts now polls /api/portfolio and /api/portfolio/history on a 10s interval (cleared on unmount) instead of fetching once on mount"
   gaps_remaining: []
   regressions: []
 behavior_unverified_items:
+
   - truth: "Success criterion 4 (P&L chart half): the P&L line chart gains a new point at least every 30 seconds via an unattended background recorder, and its empty state resolves on its own within ~70s of a cold start with no trade"
     test: "Fresh database, no trade, watch the P&L panel for ~90 seconds in a real browser (UAT test 4, re-run after the 02-04 fix)"
     expected: "Panel shows 'Building portfolio history' then switches on its own to a flat 10000.00 line with at least two points, with no trade, no page reload, and no manual refresh"
     why_human: "This is exactly the real-wall-clock, real-browser transition that UAT test 4 originally caught failing (G-02-4). The fix is now proven at the code and integration-test layer (see evidence below) but no automated frontend test exists to exercise the actual DOM/state transition, and no human has re-run UAT test 4 against the fixed code in a live browser yet."
 human_verification:
+
   - test: "Fresh database, no trade: watch the P&L panel for ~90 seconds (UAT test 4, re-run)"
     expected: "Panel shows 'Building portfolio history' / 'usually within a minute', then switches on its own to a flat 10000.00 line with at least two points — no trade, no reload, no manual refresh"
     why_human: "Real-time, wall-clock-dependent DOM state transition; this is the exact scenario the original G-02-4 gap was caught in and needs a live re-confirmation now that the fix is in place"

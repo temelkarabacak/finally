@@ -23,10 +23,10 @@ Requirements for this milestone (the whole remaining platform, per PLAN.md). Eac
 
 ### Portfolio & Trading
 
-- [ ] **PORT-01**: User can view portfolio (positions, cash balance, total value, unrealized P&L) via `GET /api/portfolio`
-- [ ] **PORT-02**: User can execute a market buy or sell order via `POST /api/portfolio/trade`, fractional share quantities supported
-- [ ] **PORT-03**: A buy is rejected outright (never clamped) when cash is insufficient; a sell is rejected outright when held quantity is insufficient
-- [ ] **PORT-04**: Portfolio value snapshots are recorded every 30 seconds and immediately after each trade, retrievable via `GET /api/portfolio/history`
+- [x] **PORT-01**: User can view portfolio (positions, cash balance, total value, unrealized P&L) via `GET /api/portfolio`
+- [x] **PORT-02**: User can execute a market buy or sell order via `POST /api/portfolio/trade`, fractional share quantities supported
+- [x] **PORT-03**: A buy is rejected outright (never clamped) when cash is insufficient; a sell is rejected outright when held quantity is insufficient
+- [x] **PORT-04**: Portfolio value snapshots are recorded every 30 seconds and immediately after each trade, retrievable via `GET /api/portfolio/history`
 - [x] **PORT-05**: Massive API failures (auth, rate limit, network, or service error) permanently fail the running app over to the simulator for the remainder of the run — never switches back
 
 ### AI Chat
@@ -46,14 +46,14 @@ Requirements for this milestone (the whole remaining platform, per PLAN.md). Eac
 - [x] **UI-04**: Portfolio heatmap (treemap) sized by position weight, colored by P&L
 - [x] **UI-05**: P&L line chart of total portfolio value over time
 - [x] **UI-06**: Positions table (ticker, quantity, avg cost, current price, unrealized P&L, % change)
-- [ ] **UI-07**: Trade bar lets the user submit a buy or sell market order (ticker, quantity, buy/sell buttons)
+- [x] **UI-07**: Trade bar lets the user submit a buy or sell market order (ticker, quantity, buy/sell buttons)
 - [ ] **UI-08**: Docked/collapsible AI chat panel with loading state and inline trade/watchlist action confirmations
-- [ ] **UI-09**: Header shows live portfolio total value, connection status indicator (green/yellow/red dot), and cash balance
+- [x] **UI-09**: Header shows live portfolio total value, connection status indicator (green/yellow/red dot), and cash balance
 - [x] **UI-10**: Dark trading-terminal theme applied throughout (backgrounds, accent colors `#ecad0a`/`#209dd7`/`#753991`, price flash colors)
 
 ### Testing
 
-- [ ] **TEST-01**: Backend unit tests cover portfolio trade execution, P&L calculation, and edge cases (insufficient cash/shares)
+- [x] **TEST-01**: Backend unit tests cover portfolio trade execution, P&L calculation, and edge cases (insufficient cash/shares)
 - [ ] **TEST-02**: Backend unit tests cover LLM structured-output parsing, including malformed responses
 - [ ] **TEST-03**: Backend unit tests cover API route status codes and response shapes for portfolio/watchlist/chat
 - [ ] **TEST-04**: Frontend unit tests cover price flash animation, watchlist CRUD, portfolio calculations, and chat rendering/loading state
@@ -95,10 +95,10 @@ Populated during roadmap creation (2026-08-23).
 | WATCH-02 | Phase 1 | Complete |
 | WATCH-03 | Phase 1 | Complete |
 | WATCH-04 | Phase 1 | Complete |
-| PORT-01 | Phase 2 | Pending |
-| PORT-02 | Phase 2 | Pending |
-| PORT-03 | Phase 2 | Pending |
-| PORT-04 | Phase 2 | Pending |
+| PORT-01 | Phase 2 | Complete |
+| PORT-02 | Phase 2 | Complete |
+| PORT-03 | Phase 2 | Complete |
+| PORT-04 | Phase 2 | Complete |
 | PORT-05 | Phase 1 | Complete |
 | CHAT-01 | Phase 3 | Pending |
 | CHAT-02 | Phase 3 | Pending |
@@ -112,11 +112,11 @@ Populated during roadmap creation (2026-08-23).
 | UI-04 | Phase 2 | Complete |
 | UI-05 | Phase 2 | Complete |
 | UI-06 | Phase 2 | Complete |
-| UI-07 | Phase 2 | Pending |
+| UI-07 | Phase 2 | Complete |
 | UI-08 | Phase 3 | Pending |
-| UI-09 | Phase 2 | Pending |
+| UI-09 | Phase 2 | Complete |
 | UI-10 | Phase 1 | Complete |
-| TEST-01 | Phase 2 | Pending |
+| TEST-01 | Phase 2 | Complete |
 | TEST-02 | Phase 3 | Pending |
 | TEST-03 | Phase 3 | Pending |
 | TEST-04 | Phase 3 | Pending |

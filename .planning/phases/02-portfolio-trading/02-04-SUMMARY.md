@@ -153,3 +153,10 @@ None.
 ---
 *Phase: 02-portfolio-trading*
 *Completed: 2026-08-25*
+
+## Self-Check: PASSED
+
+- FOUND: frontend/hooks/usePortfolio.ts
+- FOUND: .planning/phases/02-portfolio-trading/02-04-SUMMARY.md
+- FOUND commit: 6129e9c
+- FOUND commit: c6dff5f

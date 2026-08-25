@@ -13,14 +13,14 @@ import sqlite3
 import time
 from collections.abc import Callable
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Query
 
 from app.market import MarketDataSource, PriceCache
 
 from .client import get_chat_response
 from .executor import execute_actions
 from .mock import mock_chat_response
-from .persistence import load_recent_chat_messages, save_chat_message
+from .persistence import load_chat_history, load_recent_chat_messages, save_chat_message
 from .prompt import SYSTEM_PROMPT, build_messages, build_portfolio_context
 from .schemas import ChatRequest, ChatResponse
 
@@ -105,6 +105,17 @@ def create_chat_router(
     returns a fresh APIRouter per call so tests can build it repeatedly.
     """
     router = APIRouter(prefix="/api/chat", tags=["chat"])
+
+    @router.get("/history")
+    async def get_history(limit: int = Query(default=50, ge=1, le=200)) -> list[dict]:
+        """Return the persisted transcript, oldest first.
+
+        200 with [] when nothing is persisted -- the same stance
+        GET /api/portfolio/history already takes, since an empty transcript
+        is a valid state rather than a missing resource.
+        """
+        conn = get_conn()
+        return load_chat_history(conn, limit)
 
     @router.post("")
     async def post_chat(request: ChatRequest) -> dict:

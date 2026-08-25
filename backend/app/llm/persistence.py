@@ -65,3 +65,28 @@ def load_recent_chat_messages(
         (user_id, limit),
     ).fetchall()
     return [{"role": role, "content": content} for role, content in reversed(rows)]
+
+
+def load_chat_history(
+    conn: sqlite3.Connection, limit: int = 50, user_id: str = DEFAULT_USER_ID
+) -> list[dict]:
+    """Return the most recent `limit` chat_messages rows, oldest first.
+
+    The transcript reader for the UI, deliberately separate from
+    load_recent_chat_messages() (the model-context reader): this function
+    includes `actions` so the drawer can restore trade confirmation cards
+    on reload, while the model context never replays actions.
+    """
+    rows = conn.execute(
+        "SELECT role, content, actions FROM chat_messages WHERE user_id = ? "
+        "ORDER BY created_at DESC LIMIT ?",
+        (user_id, limit),
+    ).fetchall()
+    return [
+        {
+            "role": role,
+            "content": content,
+            "actions": json.loads(actions) if actions is not None else None,
+        }
+        for role, content, actions in reversed(rows)
+    ]

@@ -31,6 +31,18 @@ _PORTFOLIO_RESPONSE_KEYS = {
     "positions",
 }
 
+_POSITION_RESPONSE_KEYS = {
+    "ticker",
+    "quantity",
+    "avg_cost",
+    "current_price",
+    "market_value",
+    "unrealized_pnl",
+    "unrealized_pnl_percent",
+}
+
+_HISTORY_POINT_KEYS = {"time", "value", "recorded_at"}
+
 
 @pytest.fixture
 def portfolio_client(initialized_db):
@@ -67,6 +79,19 @@ class TestGetPortfolio:
         assert body["unrealized_pnl"] == 0.0
         assert body["positions"] == []
 
+    def test_open_position_reports_exact_key_set(self, portfolio_client):
+        client, _conn, _source, _cache = portfolio_client
+
+        client.post(
+            "/api/portfolio/trade", json={"ticker": "AAPL", "side": "buy", "quantity": 1.0}
+        )
+        response = client.get("/api/portfolio")
+
+        assert response.status_code == 200
+        positions = response.json()["positions"]
+        assert len(positions) == 1
+        assert set(positions[0].keys()) == _POSITION_RESPONSE_KEYS
+
 
 class TestGetHistory:
     def test_returns_200_and_array_in_every_state(self, portfolio_client):
@@ -83,8 +108,10 @@ class TestGetHistory:
 
         populated_response = client.get("/api/portfolio/history")
         assert populated_response.status_code == 200
-        assert isinstance(populated_response.json(), list)
-        assert len(populated_response.json()) == 1
+        points = populated_response.json()
+        assert isinstance(points, list)
+        assert len(points) == 1
+        assert set(points[0].keys()) == _HISTORY_POINT_KEYS
 
 
 class TestPostTradeValidation:
@@ -126,6 +153,24 @@ class TestPostTradeValidation:
 
         assert response.status_code == 422
 
+    def test_ticker_with_digit_returns_422(self, portfolio_client):
+        client, _conn, _source, _cache = portfolio_client
+
+        response = client.post(
+            "/api/portfolio/trade", json={"ticker": "AAP1", "side": "buy", "quantity": 1}
+        )
+
+        assert response.status_code == 422
+
+    def test_ticker_with_internal_space_returns_422(self, portfolio_client):
+        client, _conn, _source, _cache = portfolio_client
+
+        response = client.post(
+            "/api/portfolio/trade", json={"ticker": "AA PL", "side": "buy", "quantity": 1}
+        )
+
+        assert response.status_code == 422
+
     def test_insufficient_cash_returns_400_with_detail(self, portfolio_client):
         client, _conn, _source, _cache = portfolio_client
 
@@ -135,6 +180,18 @@ class TestPostTradeValidation:
 
         assert response.status_code == 400
         assert isinstance(response.json()["detail"], str)
+        assert response.json()["detail"]
+
+    def test_insufficient_shares_returns_400_with_detail(self, portfolio_client):
+        client, _conn, _source, _cache = portfolio_client
+
+        response = client.post(
+            "/api/portfolio/trade", json={"ticker": "AAPL", "side": "sell", "quantity": 5.0}
+        )
+
+        assert response.status_code == 400
+        assert isinstance(response.json()["detail"], str)
+        assert response.json()["detail"]
 
 
 class TestPostTradeSuccess:
@@ -163,3 +220,13 @@ class TestPostTradeSuccess:
         for key in _TRADE_RESPONSE_KEYS - {"position"}:
             assert body[key] is not None
         assert body["position"] is not None
+
+    def test_fractional_quantity_echoes_unrounded(self, portfolio_client):
+        client, _conn, _source, _cache = portfolio_client
+
+        response = client.post(
+            "/api/portfolio/trade", json={"ticker": "AAPL", "side": "buy", "quantity": 2.5}
+        )
+
+        assert response.status_code == 200
+        assert response.json()["quantity"] == 2.5

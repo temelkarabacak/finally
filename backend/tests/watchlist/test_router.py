@@ -40,6 +40,16 @@ class FakeMarketSource:
         return list(self._tickers)
 
 
+_WATCHLIST_ENTRY_KEYS = {
+    "ticker",
+    "price",
+    "previous_price",
+    "change",
+    "change_percent",
+    "direction",
+}
+
+
 def _insert_position(conn, ticker: str, quantity: float = 1.0) -> None:
     conn.execute(
         "INSERT INTO positions (id, user_id, ticker, quantity, avg_cost, updated_at) "
@@ -71,6 +81,9 @@ class TestWatchlistRouter:
         response = client.post("/api/watchlist", json={"ticker": "pypl"})
 
         assert response.status_code == 201
+        body = response.json()
+        assert set(body.keys()) == _WATCHLIST_ENTRY_KEYS
+        assert body["ticker"] == "PYPL"
         row = conn.execute("SELECT ticker FROM watchlist WHERE ticker = 'PYPL'").fetchone()
         assert row is not None
         assert "PYPL" in source.get_tickers()
@@ -83,6 +96,8 @@ class TestWatchlistRouter:
 
         second = client.post("/api/watchlist", json={"ticker": "PYPL"})
         assert second.status_code == 409
+        assert isinstance(second.json()["detail"], str)
+        assert second.json()["detail"]
 
         count = conn.execute("SELECT COUNT(*) FROM watchlist WHERE ticker = 'PYPL'").fetchone()[
             0
@@ -93,6 +108,16 @@ class TestWatchlistRouter:
         client, conn, source, _cache = watchlist_client
 
         response = client.post("/api/watchlist", json={"ticker": "   "})
+
+        assert response.status_code == 422
+        count = conn.execute("SELECT COUNT(*) FROM watchlist").fetchone()[0]
+        assert count == 10  # unchanged from seed
+        assert source.add_calls == []
+
+    def test_post_ticker_with_invalid_characters_returns_422(self, watchlist_client):
+        client, conn, source, _cache = watchlist_client
+
+        response = client.post("/api/watchlist", json={"ticker": "PY$PL"})
 
         assert response.status_code == 422
         count = conn.execute("SELECT COUNT(*) FROM watchlist").fetchone()[0]
@@ -115,6 +140,7 @@ class TestWatchlistRouter:
         response = client.delete("/api/watchlist/AAPL")
 
         assert response.status_code == 204
+        assert response.content == b""
         row = conn.execute("SELECT 1 FROM watchlist WHERE ticker = 'AAPL'").fetchone()
         assert row is None
         assert "AAPL" not in source.get_tickers()
@@ -166,4 +192,9 @@ class TestWatchlistRouter:
         data = response.json()
         assert len(data) == 10  # seeded default watchlist
         aapl_entry = next(entry for entry in data if entry["ticker"] == "AAPL")
+        assert set(aapl_entry.keys()) == _WATCHLIST_ENTRY_KEYS
         assert aapl_entry["price"] is None
+        assert aapl_entry["previous_price"] is None
+        assert aapl_entry["change"] is None
+        assert aapl_entry["change_percent"] is None
+        assert aapl_entry["direction"] is None

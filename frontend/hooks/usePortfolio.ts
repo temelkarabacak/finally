@@ -26,6 +26,11 @@ export type PnlPoint = { time: number; value: number };
 
 type RawHistoryPoint = { time: number; value: number; recorded_at: string };
 
+// Well under the backend's 30s snapshot cadence, so the second snapshot
+// (landing around t+60s) is picked up inside the ~70s window the UAT test
+// observes, giving the chart its second point without a trade.
+const PORTFOLIO_POLL_INTERVAL_MS = 10000;
+
 /**
  * Same floor-and-dedupe guard usePriceStream applies to its timeline buffer:
  * the 30s recorder and a post-trade write can land in the same second by
@@ -96,9 +101,10 @@ export function revalue(
 }
 
 /**
- * Fetches GET /api/portfolio and GET /api/portfolio/history once on mount
- * and exposes a refresh callback for the trade bar to call after a fill, so
- * a fill updates the header and the P&L chart in one pass. Revalues the
+ * Fetches GET /api/portfolio and GET /api/portfolio/history on mount and
+ * then on a repeating interval, and exposes a refresh callback for the
+ * trade bar to call after a fill as an immediate extra call on top, so a
+ * fill updates the header and the P&L chart in one pass. Revalues the
  * fetched portfolio against the live SSE price map so the header and
  * positions table move with the stream instead of only after a trade.
  */
@@ -152,7 +158,14 @@ export function usePortfolio(prices: Record<string, PriceTick>): {
   }, []);
 
   useEffect(() => {
+    // Pre-existing lint pattern (same shape flagged in WatchlistPanel.tsx
+    // per STATE.md): a stable useCallback fetch invoked on mount is the
+    // intentional data-fetching pattern this rule flags as a heuristic;
+    // the setState calls happen after an await, not synchronously.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     refresh();
+    const intervalId = setInterval(refresh, PORTFOLIO_POLL_INTERVAL_MS);
+    return () => clearInterval(intervalId);
   }, [refresh]);
 
   const revalued = useMemo(

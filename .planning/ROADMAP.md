@@ -71,7 +71,7 @@ Plans:
   4. User sees a portfolio heatmap where each position is sized by portfolio weight and colored by P&L, and a P&L line chart of total portfolio value that gains a new point at least every 30 seconds and immediately after each trade
   5. The header shows live portfolio total value, cash balance, and a connection status dot that goes green when connected, yellow while reconnecting, and red when disconnected
 
-**Plans**: 3/4 plans executed
+**Plans**: 4/4 plans executed
 
 Plans:
 **Wave 1**
@@ -88,7 +88,7 @@ Plans:
 
 **Wave 4** *(gap closure — blocked on Wave 3 completion)*
 
-- [ ] 02-04-PLAN.md — Gap G-02-4: poll portfolio history in `usePortfolio` so the P&L chart fills in on a cold start without a trade (UI-05)
+- [x] 02-04-PLAN.md — Gap G-02-4: poll portfolio history in `usePortfolio` so the P&L chart fills in on a cold start without a trade (UI-05)
 
 **UI hint**: yes
 
@@ -150,7 +150,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Live Market Terminal | 3/3 | Complete    | 2026-08-23 |
-| 2. Portfolio & Trading | 3/3 | In Progress|  |
+| 2. Portfolio & Trading | 4/4 | In Progress|  |
 | 3. AI Copilot | 0/TBD | Not started | - |
 | 4. One-Command Deployment | 0/TBD | Not started | - |
 

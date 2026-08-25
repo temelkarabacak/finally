@@ -111,12 +111,12 @@ Plans:
   4. Conversation history survives a page reload, and a request that hangs past 30 seconds returns a generic retry message with no trade executed and no failed attempt left in the history
   5. With `LLM_MOCK=true` the chat returns deterministic responses without calling OpenRouter, so the full backend and frontend unit suites run offline and green — covering structured-output parsing (including malformed responses), portfolio/watchlist/chat route status codes and response shapes, and UI components (price flash, watchlist CRUD, portfolio calculations, chat rendering and loading state)
 
-**Plans**: 4 plans
+**Plans**: 1/4 plans executed
 
 Plans:
 **Wave 1**
 
-- [ ] 03-01-PLAN.md — Tracer: chat turn end to end — LiteLLM/Cerebras client, structured-output contract, two-transaction persistence, `POST /api/chat`, collapsed bottom drawer, plus the litellm/pydantic and vitest installs behind a package-legitimacy gate (CHAT-01, CHAT-04, CHAT-06, UI-08)
+- [x] 03-01-PLAN.md — Tracer: chat turn end to end — LiteLLM/Cerebras client, structured-output contract, two-transaction persistence, `POST /api/chat`, collapsed bottom drawer, plus the litellm/pydantic and vitest installs behind a package-legitimacy gate (CHAT-01, CHAT-04, CHAT-06, UI-08)
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
@@ -166,7 +166,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 |-------|----------------|--------|-----------|
 | 1. Live Market Terminal | 3/3 | Complete    | 2026-08-23 |
 | 2. Portfolio & Trading | 4/4 | Complete    | 2026-08-25 |
-| 3. AI Copilot | 0/4 | Not started | - |
+| 3. AI Copilot | 1/4 | In Progress|  |
 | 4. One-Command Deployment | 0/TBD | Not started | - |
 
 ## Requirement Coverage

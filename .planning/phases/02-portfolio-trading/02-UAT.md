@@ -1,20 +1,14 @@
 ---
-status: testing
+status: complete
 phase: 02-portfolio-trading
 source: [02-VERIFICATION.md, 02-04-SUMMARY.md]
 started: 2026-08-24T21:47:41Z
-updated: 2026-08-25T09:10:00Z
+updated: 2026-08-25T00:00:00Z
 ---
 
 ## Current Test
 
-number: 4
-name: Fresh database, no trade: watch the P&L panel for ~90 seconds (re-run after gap G-02-4 fix)
-expected: |
-  Panel shows "Building portfolio history" / "usually within a minute" at first, then switches
-  on its own to a flat 10000.00 line with at least two points — no trade, no page reload, no
-  manual refresh.
-awaiting: user response
+[testing complete]
 
 ## Tests
 
@@ -32,8 +26,7 @@ result: pass
 
 ### 4. Wait ~70 seconds after a fresh app start without trading, watching the P&L panel (re-run after gap G-02-4 fix)
 expected: Panel shows "Building portfolio history" / "usually within a minute" for the first phase, then switches to a flat 10000.00 line with at least two points, proving the recorder runs unconditionally (D-04) with no trade
-result: [pending]
-note: "Gap-closure plan 02-04 added a 10s client poll in usePortfolio.ts. Verifier independently confirmed 2 history points recorded within 70s of a cold start via a direct API probe, but the live-browser empty-state-to-chart DOM transition has not been re-observed since the fix — this is that re-observation."
+result: pass
 
 ### 5. Buy three tickers in clearly different dollar amounts and observe the heatmap
 expected: Tile areas visibly track the dollar weights (not visually equal), each tile shows ticker + signed percent, green for winners and red for losers; a very small fourth position's tile suppresses its text label rather than clipping
@@ -54,9 +47,9 @@ result: pass
 ## Summary
 
 total: 8
-passed: 7
+passed: 8
 issues: 0
-pending: 1
+pending: 0
 skipped: 0
 blocked: 0
 
@@ -64,7 +57,9 @@ blocked: 0
 
 - gap_id: G-02-4
   truth: "Panel shows \"Building portfolio history\" then switches to a flat 10000.00 line with at least two points within ~70s of a fresh app start, with no trade required (D-04)"
-  status: failed
+  status: resolved
+  resolved_by: 02-04-PLAN.md
+  resolved_at: 2026-08-25
   reason: "User reported: I've been waiting for about 2 minutes without making any trades, but the P&L history chart is still not showing even as a flat line. Follow-up: P&L history appeared after buying something — suggests the panel/chart only renders once a trade has happened, contrary to D-04's unconditional-recording intent."
   severity: major
   test: 4

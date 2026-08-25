@@ -185,6 +185,11 @@ None - no external service configuration required.
 - `requirements.ready-ids` and `commit-to-subrepo`/`commit` CLI verbs were unavailable in this worktree (`GSD runtime library is not built`); this SUMMARY and `REQUIREMENTS.md` (unchanged) were committed via plain `git add`/`git commit` instead, per the plan's documented fallback.
 - The `vitest.setup.ts` `AnimationEvent` polyfill and the `afterEach(cleanup)` pattern in `WatchlistPanel.test.tsx` are now available precedent for any future frontend test in `frontend/components/` or `frontend/hooks/` that renders more than once per test file or touches CSS animation events (relevant to 03-04's chat panel loading-state tests and future Phase 4 work).
 
+## Self-Check: PASSED
+
+- Files verified present: `backend/tests/portfolio/test_router.py`, `backend/tests/watchlist/test_router.py`, `frontend/components/WatchlistPanel.test.tsx`, `frontend/hooks/usePortfolio.test.ts`, `frontend/vitest.setup.ts`, this SUMMARY.md
+- Commits verified in `git log`: `13140c2`, `b8ea13e`, `ea2e1a1`, `0c09076`, `5e3dbfb`
+
 ---
 *Phase: 03-ai-copilot*
 *Completed: 2026-08-25*

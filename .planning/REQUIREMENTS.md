@@ -35,7 +35,7 @@ Requirements for this milestone (the whole remaining platform, per PLAN.md). Eac
 - [x] **CHAT-02**: The LLM's response can include trades that auto-execute through the same validation as manual trades; results are reflected in the chat response
 - [x] **CHAT-03**: The LLM's response can include watchlist changes that auto-execute
 - [ ] **CHAT-04**: Chat history (last 20 messages) persists across requests; the user's message is saved before the LLM call, the assistant's after successful completion
-- [ ] **CHAT-05**: A chat request that exceeds a 30-second LLM timeout aborts with a generic retry message and executes no trade; the failed attempt is not persisted to chat history
+- [x] **CHAT-05**: A chat request that exceeds a 30-second LLM timeout aborts with a generic retry message and executes no trade; the failed attempt is not persisted to chat history
 - [x] **CHAT-06**: When `LLM_MOCK=true`, the backend returns deterministic mock responses instead of calling OpenRouter
 
 ### Frontend UI
@@ -54,7 +54,7 @@ Requirements for this milestone (the whole remaining platform, per PLAN.md). Eac
 ### Testing
 
 - [x] **TEST-01**: Backend unit tests cover portfolio trade execution, P&L calculation, and edge cases (insufficient cash/shares)
-- [ ] **TEST-02**: Backend unit tests cover LLM structured-output parsing, including malformed responses
+- [x] **TEST-02**: Backend unit tests cover LLM structured-output parsing, including malformed responses
 - [ ] **TEST-03**: Backend unit tests cover API route status codes and response shapes for portfolio/watchlist/chat
 - [ ] **TEST-04**: Frontend unit tests cover price flash animation, watchlist CRUD, portfolio calculations, and chat rendering/loading state
 - [ ] **TEST-05**: Playwright E2E suite (`test/`, `LLM_MOCK=true`) covers fresh start, watchlist add/remove, buy/sell, visualizations, AI chat, and SSE reconnection
@@ -104,7 +104,7 @@ Populated during roadmap creation (2026-08-23).
 | CHAT-02 | Phase 3 | Complete |
 | CHAT-03 | Phase 3 | Complete |
 | CHAT-04 | Phase 3 | Pending |
-| CHAT-05 | Phase 3 | Pending |
+| CHAT-05 | Phase 3 | Complete |
 | CHAT-06 | Phase 3 | Complete |
 | UI-01 | Phase 1 | Complete |
 | UI-02 | Phase 1 | Complete |
@@ -117,7 +117,7 @@ Populated during roadmap creation (2026-08-23).
 | UI-09 | Phase 2 | Complete |
 | UI-10 | Phase 1 | Complete |
 | TEST-01 | Phase 2 | Complete |
-| TEST-02 | Phase 3 | Pending |
+| TEST-02 | Phase 3 | Complete |
 | TEST-03 | Phase 3 | Pending |
 | TEST-04 | Phase 3 | Pending |
 | TEST-05 | Phase 4 | Pending |

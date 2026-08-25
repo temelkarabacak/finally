@@ -4,11 +4,38 @@ from __future__ import annotations
 
 import pytest
 
+from app.llm import client as client_module
 from app.llm.client import get_chat_response
 from app.llm.persistence import load_recent_chat_messages, save_chat_message
 from app.llm.prompt import build_messages, build_portfolio_context
+from app.llm.router import GENERIC_RETRY_MESSAGE
 from app.llm.schemas import ChatResponse
 from app.market.cache import PriceCache
+
+
+@pytest.fixture
+def live_chat_client(initialized_db):
+    """Like chat_client, but mock=False -- routes through the real
+    get_chat_response()/litellm.completion() call chain so tests can patch
+    litellm.completion directly to simulate timeout/malformed-output."""
+    from fastapi import FastAPI
+    from fastapi.testclient import TestClient
+
+    from app.llm import create_chat_router
+    from app.market.seed_prices import SEED_PRICES
+    from tests.portfolio.test_trades import FakeMarketSource
+
+    conn = initialized_db
+    source = FakeMarketSource()
+    cache = PriceCache()
+    for ticker, price in SEED_PRICES.items():
+        cache.update(ticker, price)
+
+    app = FastAPI()
+    app.include_router(create_chat_router(lambda: conn, source, cache, mock=False))
+
+    with TestClient(app) as client:
+        yield client, conn
 
 
 class TestPostChatValidation:
@@ -117,3 +144,121 @@ class TestHermeticityGuard:
     async def test_live_path_hits_blocked_litellm_completion(self):
         with pytest.raises(RuntimeError, match="litellm.completion"):
             await get_chat_response([{"role": "user", "content": "hi"}])
+
+
+class TestGetChatHistory:
+    """GET /api/chat/history: the transcript reader for the drawer (CHAT-04/05)."""
+
+    def test_empty_database_returns_200_and_empty_list(self, chat_client):
+        client, _conn, _source, _cache = chat_client
+
+        response = client.get("/api/chat/history")
+
+        assert response.status_code == 200
+        assert response.json() == []
+
+    def test_two_turns_returns_four_entries_oldest_first_with_actions(self, chat_client):
+        client, _conn, _source, _cache = chat_client
+
+        client.post("/api/chat", json={"message": "Analyze my portfolio"})
+        client.post("/api/chat", json={"message": "Buy 10 shares of AAPL"})
+
+        response = client.get("/api/chat/history")
+
+        assert response.status_code == 200
+        body = response.json()
+        assert len(body) == 4
+        assert [entry["role"] for entry in body] == ["user", "assistant", "user", "assistant"]
+        for entry in body:
+            assert set(entry.keys()) == {"role", "content", "actions"}
+        assert body[0]["actions"] is None  # user row
+        assert body[1]["actions"] == {"trades": [], "watchlist_changes": []}  # assistant row
+
+    def test_limit_1_returns_single_most_recent_message(self, chat_client):
+        client, _conn, _source, _cache = chat_client
+
+        client.post("/api/chat", json={"message": "Analyze my portfolio"})
+
+        response = client.get("/api/chat/history", params={"limit": 1})
+
+        assert response.status_code == 200
+        body = response.json()
+        assert len(body) == 1
+        assert body[0]["role"] == "assistant"
+
+    @pytest.mark.parametrize("limit", [0, -1, 500])
+    def test_out_of_range_limit_returns_422(self, chat_client, limit):
+        client, _conn, _source, _cache = chat_client
+
+        response = client.get("/api/chat/history", params={"limit": limit})
+
+        assert response.status_code == 422
+
+
+class TestChatDegradation:
+    """HTTP-level TEST-02/CHAT-05: timeout and malformed output both degrade
+    to the identical shared GENERIC_RETRY_MESSAGE body, executing nothing
+    and persisting no assistant row."""
+
+    def test_timeout_returns_200_generic_message_and_empty_actions(
+        self, live_chat_client, monkeypatch
+    ):
+        from openai import APITimeoutError
+
+        def _raise(*args, **kwargs):
+            raise APITimeoutError(request=None)
+
+        monkeypatch.setattr(client_module.litellm, "completion", _raise)
+        client, _conn = live_chat_client
+
+        response = client.post("/api/chat", json={"message": "Analyze my portfolio"})
+
+        assert response.status_code == 200
+        body = response.json()
+        assert body["message"] == GENERIC_RETRY_MESSAGE
+        assert body["actions"] == {"trades": [], "watchlist_changes": []}
+
+    def test_malformed_output_returns_identical_body_to_timeout(
+        self, live_chat_client, monkeypatch
+    ):
+        def _prose_completion(*args, **kwargs):
+            class _Message:
+                content = "Sure, here's my analysis in plain prose, not JSON."
+
+            class _Choice:
+                message = _Message()
+
+            class _Response:
+                choices = [_Choice()]
+
+            return _Response()
+
+        monkeypatch.setattr(client_module.litellm, "completion", _prose_completion)
+        client, _conn = live_chat_client
+
+        response = client.post("/api/chat", json={"message": "Analyze my portfolio"})
+
+        assert response.status_code == 200
+        body = response.json()
+        assert body["message"] == GENERIC_RETRY_MESSAGE
+        assert body["actions"] == {"trades": [], "watchlist_changes": []}
+
+    def test_resending_after_timeout_produces_two_user_rows_zero_assistant_rows(
+        self, live_chat_client, monkeypatch
+    ):
+        from openai import APITimeoutError
+
+        def _raise(*args, **kwargs):
+            raise APITimeoutError(request=None)
+
+        monkeypatch.setattr(client_module.litellm, "completion", _raise)
+        client, conn = live_chat_client
+
+        client.post("/api/chat", json={"message": "Buy 10 AAPL"})
+        client.post("/api/chat", json={"message": "Buy 10 AAPL"})
+
+        roles = [
+            row[0]
+            for row in conn.execute("SELECT role FROM chat_messages ORDER BY created_at").fetchall()
+        ]
+        assert roles == ["user", "user"]

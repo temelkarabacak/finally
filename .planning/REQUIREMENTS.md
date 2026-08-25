@@ -31,7 +31,7 @@ Requirements for this milestone (the whole remaining platform, per PLAN.md). Eac
 
 ### AI Chat
 
-- [ ] **CHAT-01**: User can send a message via `POST /api/chat` and receive one complete JSON response (message + executed actions) — no token streaming
+- [x] **CHAT-01**: User can send a message via `POST /api/chat` and receive one complete JSON response (message + executed actions) — no token streaming
 - [ ] **CHAT-02**: The LLM's response can include trades that auto-execute through the same validation as manual trades; results are reflected in the chat response
 - [ ] **CHAT-03**: The LLM's response can include watchlist changes that auto-execute
 - [ ] **CHAT-04**: Chat history (last 20 messages) persists across requests; the user's message is saved before the LLM call, the assistant's after successful completion
@@ -100,7 +100,7 @@ Populated during roadmap creation (2026-08-23).
 | PORT-03 | Phase 2 | Complete |
 | PORT-04 | Phase 2 | Complete |
 | PORT-05 | Phase 1 | Complete |
-| CHAT-01 | Phase 3 | Pending |
+| CHAT-01 | Phase 3 | Complete |
 | CHAT-02 | Phase 3 | Pending |
 | CHAT-03 | Phase 3 | Pending |
 | CHAT-04 | Phase 3 | Pending |

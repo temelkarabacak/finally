@@ -88,6 +88,12 @@ None yet.
 - [Phase 2]: SQLite allows one writer at a time; the 30s snapshot task, trade writes, and chat writes need serialized access (WAL mode or a write queue)
 - [Phase 3]: `litellm` and `pydantic` are not in `backend/pyproject.toml` — must be added via `uv add` before the LLM module can be built
 
+### Quick Tasks Completed
+
+| # | Description | Date | Commit | Directory |
+|---|-------------|------|--------|-----------|
+| 260825-ddv | Format P&L chart currency values with thousands separators | 2026-08-25 | 698a386 | [260825-ddv-format-p-l-chart-currency-values-with-th](./quick/260825-ddv-format-p-l-chart-currency-values-with-th/) |
+
 ## Deferred Items
 
 Items acknowledged and deferred at milestone close, most recent first:
@@ -99,5 +105,5 @@ Items acknowledged and deferred at milestone close, most recent first:
 ## Session Continuity
 
 Last session: 2026-08-24T20:16:50.799Z
-Stopped at: Completed 02-03-PLAN.md
+Stopped at: Completed 02-03-PLAN.md - Completed quick task 260825-ddv: Format P&L chart currency values with thousands separators
 Resume file: None

@@ -10,6 +10,7 @@ import { TradeBar } from "@/components/TradeBar";
 import { WatchlistPanel } from "@/components/WatchlistPanel";
 import { usePortfolio } from "@/hooks/usePortfolio";
 import { usePriceStream } from "@/hooks/usePriceStream";
+import { formatCurrency } from "@/lib/format";
 
 const CONNECTION_DOT_COLOR: Record<string, string> = {
   open: "bg-up",
@@ -46,10 +47,10 @@ export default function Home() {
         <h1 className="text-xl font-semibold text-accent-yellow">FinAlly</h1>
         <div className="flex items-center font-mono text-sm text-terminal-muted">
           <span className="border-l border-terminal-border px-3 first:border-l-0 first:pl-0">
-            Total Value {portfolio ? portfolio.total_value.toFixed(2) : "--"}
+            Total Value {portfolio ? formatCurrency(portfolio.total_value) : "--"}
           </span>
           <span className="border-l border-terminal-border px-3">
-            Cash {portfolio ? portfolio.cash_balance.toFixed(2) : "--"}
+            Cash {portfolio ? formatCurrency(portfolio.cash_balance) : "--"}
           </span>
           <span className="flex items-center gap-2 border-l border-terminal-border px-3">
             <span

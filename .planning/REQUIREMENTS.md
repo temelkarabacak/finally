@@ -34,7 +34,7 @@ Requirements for this milestone (the whole remaining platform, per PLAN.md). Eac
 - [x] **CHAT-01**: User can send a message via `POST /api/chat` and receive one complete JSON response (message + executed actions) — no token streaming
 - [x] **CHAT-02**: The LLM's response can include trades that auto-execute through the same validation as manual trades; results are reflected in the chat response
 - [x] **CHAT-03**: The LLM's response can include watchlist changes that auto-execute
-- [ ] **CHAT-04**: Chat history (last 20 messages) persists across requests; the user's message is saved before the LLM call, the assistant's after successful completion
+- [x] **CHAT-04**: Chat history (last 20 messages) persists across requests; the user's message is saved before the LLM call, the assistant's after successful completion
 - [x] **CHAT-05**: A chat request that exceeds a 30-second LLM timeout aborts with a generic retry message and executes no trade; the failed attempt is not persisted to chat history
 - [x] **CHAT-06**: When `LLM_MOCK=true`, the backend returns deterministic mock responses instead of calling OpenRouter
 
@@ -47,7 +47,7 @@ Requirements for this milestone (the whole remaining platform, per PLAN.md). Eac
 - [x] **UI-05**: P&L line chart of total portfolio value over time
 - [x] **UI-06**: Positions table (ticker, quantity, avg cost, current price, unrealized P&L, % change)
 - [x] **UI-07**: Trade bar lets the user submit a buy or sell market order (ticker, quantity, buy/sell buttons)
-- [ ] **UI-08**: Docked/collapsible AI chat panel with loading state and inline trade/watchlist action confirmations
+- [x] **UI-08**: Docked/collapsible AI chat panel with loading state and inline trade/watchlist action confirmations
 - [x] **UI-09**: Header shows live portfolio total value, connection status indicator (green/yellow/red dot), and cash balance
 - [x] **UI-10**: Dark trading-terminal theme applied throughout (backgrounds, accent colors `#ecad0a`/`#209dd7`/`#753991`, price flash colors)
 
@@ -55,8 +55,8 @@ Requirements for this milestone (the whole remaining platform, per PLAN.md). Eac
 
 - [x] **TEST-01**: Backend unit tests cover portfolio trade execution, P&L calculation, and edge cases (insufficient cash/shares)
 - [x] **TEST-02**: Backend unit tests cover LLM structured-output parsing, including malformed responses
-- [ ] **TEST-03**: Backend unit tests cover API route status codes and response shapes for portfolio/watchlist/chat
-- [ ] **TEST-04**: Frontend unit tests cover price flash animation, watchlist CRUD, portfolio calculations, and chat rendering/loading state
+- [x] **TEST-03**: Backend unit tests cover API route status codes and response shapes for portfolio/watchlist/chat
+- [x] **TEST-04**: Frontend unit tests cover price flash animation, watchlist CRUD, portfolio calculations, and chat rendering/loading state
 - [ ] **TEST-05**: Playwright E2E suite (`test/`, `LLM_MOCK=true`) covers fresh start, watchlist add/remove, buy/sell, visualizations, AI chat, and SSE reconnection
 
 ### Deployment
@@ -103,7 +103,7 @@ Populated during roadmap creation (2026-08-23).
 | CHAT-01 | Phase 3 | Complete |
 | CHAT-02 | Phase 3 | Complete |
 | CHAT-03 | Phase 3 | Complete |
-| CHAT-04 | Phase 3 | Pending |
+| CHAT-04 | Phase 3 | Complete |
 | CHAT-05 | Phase 3 | Complete |
 | CHAT-06 | Phase 3 | Complete |
 | UI-01 | Phase 1 | Complete |
@@ -113,13 +113,13 @@ Populated during roadmap creation (2026-08-23).
 | UI-05 | Phase 2 | Complete |
 | UI-06 | Phase 2 | Complete |
 | UI-07 | Phase 2 | Complete |
-| UI-08 | Phase 3 | Pending |
+| UI-08 | Phase 3 | Complete |
 | UI-09 | Phase 2 | Complete |
 | UI-10 | Phase 1 | Complete |
 | TEST-01 | Phase 2 | Complete |
 | TEST-02 | Phase 3 | Complete |
-| TEST-03 | Phase 3 | Pending |
-| TEST-04 | Phase 3 | Pending |
+| TEST-03 | Phase 3 | Complete |
+| TEST-04 | Phase 3 | Complete |
 | TEST-05 | Phase 4 | Pending |
 | DEPLOY-01 | Phase 4 | Pending |
 | DEPLOY-02 | Phase 4 | Pending |

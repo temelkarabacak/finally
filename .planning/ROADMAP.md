@@ -111,7 +111,7 @@ Plans:
   4. Conversation history survives a page reload, and a request that hangs past 30 seconds returns a generic retry message with no trade executed and no failed attempt left in the history
   5. With `LLM_MOCK=true` the chat returns deterministic responses without calling OpenRouter, so the full backend and frontend unit suites run offline and green — covering structured-output parsing (including malformed responses), portfolio/watchlist/chat route status codes and response shapes, and UI components (price flash, watchlist CRUD, portfolio calculations, chat rendering and loading state)
 
-**Plans**: 3/4 plans executed
+**Plans**: 4/4 plans executed
 
 Plans:
 **Wave 1**
@@ -125,7 +125,7 @@ Plans:
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
-- [ ] 03-04-PLAN.md — Resilience and starter experience: `GET /api/chat/history`, timeout/malformed safe degrade, quick prompts, loading and error states (CHAT-04, CHAT-05, TEST-02, TEST-03, TEST-04, UI-08)
+- [x] 03-04-PLAN.md — Resilience and starter experience: `GET /api/chat/history`, timeout/malformed safe degrade, quick prompts, loading and error states (CHAT-04, CHAT-05, TEST-02, TEST-03, TEST-04, UI-08)
 
 **UI hint**: yes
 
@@ -166,7 +166,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 |-------|----------------|--------|-----------|
 | 1. Live Market Terminal | 3/3 | Complete    | 2026-08-23 |
 | 2. Portfolio & Trading | 4/4 | Complete    | 2026-08-25 |
-| 3. AI Copilot | 3/4 | In Progress|  |
+| 3. AI Copilot | 4/4 | In Progress|  |
 | 4. One-Command Deployment | 0/TBD | Not started | - |
 
 ## Requirement Coverage

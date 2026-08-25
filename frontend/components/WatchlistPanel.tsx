@@ -188,6 +188,7 @@ export function WatchlistPanel({ prices, history, selected, onSelect }: Watchlis
             return (
               <tr
                 key={ticker}
+                data-testid={`watchlist-row-${ticker}`}
                 role="row"
                 tabIndex={0}
                 aria-selected={isSelected}

@@ -1,5 +1,5 @@
 ---
-status: complete
+status: diagnosed
 phase: 02-portfolio-trading
 source: [02-VERIFICATION.md]
 started: 2026-08-24T21:47:41Z
@@ -63,5 +63,10 @@ blocked: 0
   reason: "User reported: I've been waiting for about 2 minutes without making any trades, but the P&L history chart is still not showing even as a flat line. Follow-up: P&L history appeared after buying something — suggests the panel/chart only renders once a trade has happened, contrary to D-04's unconditional-recording intent."
   severity: major
   test: 4
-  artifacts: []
-  missing: []
+  root_cause: "Backend recorder and GET /api/portfolio/history are both correct (verified live: returns [] at t=0, then a real snapshot at t=35s, unconditionally). The bug is frontend-only: usePortfolio.ts's mount useEffect (frontend/hooks/usePortfolio.ts:154-156) calls refresh() exactly once on page load, with no polling interval. The only other refresh() call site is TradeBar's onTraded callback (frontend/app/page.tsx:68) after a trade. So the initial history fetch races the backend's first 30s snapshot tick, returns [], and nothing ever re-fetches history again until a trade happens — the empty state (PnlChart.tsx:90, showEmptyState = !ready || points.length < 2) stays stuck indefinitely instead of resolving on its own."
+  artifacts:
+    - path: "frontend/hooks/usePortfolio.ts"
+      issue: "Mount-only useEffect (lines 154-156) fetches portfolio history once and never re-polls; history state never advances without a trade-triggered refresh()"
+  missing:
+    - "A periodic re-fetch of /api/portfolio/history (interval <= the 30s snapshot cadence), cleaned up on unmount, so the P&L panel's cold-start data appears without requiring a trade"
+  debug_session: ""

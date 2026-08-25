@@ -19,7 +19,9 @@ _ANALYSIS_KEYWORDS = ("portfolio", "analy", "holding", "position")
 
 # "buy 10 shares of aapl" / "sell 5 nvda" -- "shares of" is optional so both
 # phrasings resolve to the same (side, quantity, ticker) triple.
-_TRADE_RE = re.compile(r"\b(buy|sell)\b\s+(\d+(?:\.\d+)?)\s+(?:shares?\s+of\s+)?([a-z]+)\b")
+_TRADE_RE = re.compile(
+    r"\b(buy|sell)\b\s+(\d+(?:\.\d+)?)\s+(?:shares?\s+of\s+)?(?!shares?\b)([a-z]+)\b"
+)
 
 # "add pypl to my watchlist" / "remove jpm from my watchlist"
 _WATCHLIST_RE = re.compile(

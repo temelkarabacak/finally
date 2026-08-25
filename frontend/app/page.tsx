@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 
 import { ChatDrawer } from "@/components/ChatDrawer";
 import { PnlChart } from "@/components/PnlChart";
@@ -8,7 +8,7 @@ import { PortfolioHeatmap } from "@/components/PortfolioHeatmap";
 import { PositionsTable } from "@/components/PositionsTable";
 import { PriceChart } from "@/components/PriceChart";
 import { TradeBar } from "@/components/TradeBar";
-import { WatchlistPanel } from "@/components/WatchlistPanel";
+import { WatchlistPanel, type WatchlistPanelHandle } from "@/components/WatchlistPanel";
 import { usePortfolio } from "@/hooks/usePortfolio";
 import { usePriceStream } from "@/hooks/usePriceStream";
 import { formatCurrency } from "@/lib/format";
@@ -39,6 +39,16 @@ export default function Home() {
     [selectedTicker, timeline],
   );
 
+  // A buy of an unwatched ticker (manual or chat-executed) adds it to the
+  // watchlist server-side; a chat-executed watchlist add/remove mutates it
+  // directly. WatchlistPanel owns its ticker list internally and has no
+  // other way to learn about either, so both TradeBar and ChatDrawer refresh
+  // through this combined callback rather than through `refresh` alone.
+  const watchlistRef = useRef<WatchlistPanelHandle>(null);
+  const refreshAll = useCallback(async () => {
+    await Promise.all([refresh(), watchlistRef.current?.refetch()]);
+  }, [refresh]);
+
   return (
     <>
       <main
@@ -68,7 +78,7 @@ export default function Home() {
 
         <p className="text-xs text-terminal-muted">Simulated market data — not real quotes.</p>
 
-        <TradeBar selectedTicker={selectedTicker} onTraded={refresh} />
+        <TradeBar selectedTicker={selectedTicker} onTraded={refreshAll} />
 
         {/*
           Desktop-first two-column layout: watchlist on the left, main chart
@@ -76,6 +86,7 @@ export default function Home() {
         */}
         <div className="grid flex-1 grid-cols-1 gap-4 lg:grid-cols-[minmax(0,420px)_1fr]">
           <WatchlistPanel
+            ref={watchlistRef}
             prices={prices}
             history={history}
             selected={selectedTicker}
@@ -118,11 +129,11 @@ export default function Home() {
         ChatDrawer is a sibling of <main>, not a child: its fixed
         positioning overlays the trading grid (D-02) instead of
         participating in the flex column layout above. onActionsExecuted
-        reuses the same refresh callback TradeBar uses, so a chat-executed
-        fill updates the header/positions/heatmap/P&L panels identically to
-        a manual fill.
+        reuses the same refreshAll callback TradeBar uses, so a chat-executed
+        fill or watchlist change updates the header/positions/heatmap/P&L
+        panels and the watchlist grid identically to a manual one.
       */}
-      <ChatDrawer onActionsExecuted={refresh} />
+      <ChatDrawer onActionsExecuted={refreshAll} />
     </>
   );
 }

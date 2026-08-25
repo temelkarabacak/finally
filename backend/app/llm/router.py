@@ -41,13 +41,17 @@ async def handle_chat_message(
     """
     start = time.monotonic()
 
-    # 1. Persist the user's message BEFORE calling the LLM (CHAT-04) so it
+    # 1. Build fresh context and load PRIOR history first -- reads only, no
+    #    open transaction. Must happen before the save below, or the just
+    #    -inserted row would show up as the last history row AND get
+    #    appended again as the explicit final turn by build_messages.
+    portfolio_ctx = build_portfolio_context(conn, price_cache)
+    history = load_recent_chat_messages(conn, limit=20)
+
+    # 2. Persist the user's message BEFORE calling the LLM (CHAT-04) so it
     #    survives a subsequent timeout/error.
     save_chat_message(conn, role="user", content=user_text)
 
-    # 2. Build fresh context every turn -- reads only, no open transaction.
-    portfolio_ctx = build_portfolio_context(conn, price_cache)
-    history = load_recent_chat_messages(conn, limit=20)
     messages = build_messages(SYSTEM_PROMPT, portfolio_ctx, history, user_text)
 
     # 3. Call the LLM. The mock branch never touches the network.

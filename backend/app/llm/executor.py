@@ -47,7 +47,13 @@ async def apply_watchlist_change(
                 "action": "add",
                 "reason": "Already on watchlist",
             }
-        await market_source.add_ticker(ticker)
+        try:
+            await market_source.add_ticker(ticker)
+        except Exception:
+            # Mirror _execute_one_trade: the DB write already committed, so a
+            # source failure here must never crash the request or hide the
+            # already-applied change from the caller.
+            logger.exception("add_ticker failed after a chat-executed watchlist add of %s", ticker)
         return {"success": True, "ticker": ticker, "action": "add"}
 
     removed = remove_watchlist_ticker(conn, ticker)
@@ -59,7 +65,12 @@ async def apply_watchlist_change(
             "reason": "Not on watchlist",
         }
     if not ticker_has_open_position(conn, ticker):
-        await market_source.remove_ticker(ticker)
+        try:
+            await market_source.remove_ticker(ticker)
+        except Exception:
+            logger.exception(
+                "remove_ticker failed after a chat-executed watchlist remove of %s", ticker
+            )
     return {"success": True, "ticker": ticker, "action": "remove"}
 
 

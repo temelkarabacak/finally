@@ -1,8 +1,10 @@
 "use client";
 
 import {
+  forwardRef,
   useCallback,
   useEffect,
+  useImperativeHandle,
   useMemo,
   useRef,
   useState,
@@ -29,6 +31,14 @@ type WatchlistPanelProps = {
   onSelect: (ticker: string) => void;
 };
 
+/** Imperative handle so a chat-executed watchlist change (which the panel has
+ * no other way to learn about -- it owns its ticker list internally, fetched
+ * once on mount) can trigger the same GET /api/watchlist refetch a manual
+ * add/remove already does. */
+export type WatchlistPanelHandle = {
+  refetch: () => Promise<void>;
+};
+
 const DIRECTION_ARROW: Record<"up" | "down" | "flat", string> = {
   up: "▲",
   down: "▼",
@@ -42,7 +52,8 @@ const DIRECTION_ARROW: Record<"up" | "down" | "flat", string> = {
  * mutations only resync the row set via a GET /api/watchlist refetch,
  * never tearing down the SSE EventSource.
  */
-export function WatchlistPanel({ prices, history, selected, onSelect }: WatchlistPanelProps) {
+export const WatchlistPanel = forwardRef<WatchlistPanelHandle, WatchlistPanelProps>(
+  function WatchlistPanel({ prices, history, selected, onSelect }, ref) {
   const [tickers, setTickers] = useState<string[]>([]);
   const [inputValue, setInputValue] = useState("");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -59,6 +70,8 @@ export function WatchlistPanel({ prices, history, selected, onSelect }: Watchlis
   useEffect(() => {
     refetch();
   }, [refetch]);
+
+  useImperativeHandle(ref, () => ({ refetch }), [refetch]);
 
   // Flash a row's background on genuine price change. Cleared naturally by
   // the browser via onAnimationEnd, not a timer that can drift. A row that
@@ -234,4 +247,5 @@ export function WatchlistPanel({ prices, history, selected, onSelect }: Watchlis
       </table>
     </section>
   );
-}
+  },
+);

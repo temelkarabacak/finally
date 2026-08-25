@@ -9,11 +9,10 @@ call -- to avoid blocking the single event loop for up to TIMEOUT_S.
 from __future__ import annotations
 
 import asyncio
-import json
 import logging
 
 import litellm
-from openai import APITimeoutError
+from openai import APIError, APITimeoutError
 from pydantic import ValidationError
 
 from .schemas import ChatResponse
@@ -55,8 +54,16 @@ async def get_chat_response(messages: list[dict]) -> ChatResponse | None:
     except APITimeoutError:
         logger.warning("LLM call timed out after %ss", TIMEOUT_S)
         return None
-    except (ValidationError, json.JSONDecodeError) as e:
+    except APIError as e:
+        # Rate limits, auth failures, connection drops, 5xx from the
+        # provider -- any of these must degrade the same way a timeout
+        # does rather than propagate into an unhandled 500 on /api/chat.
+        logger.warning("LLM call failed: %s", e)
+        return None
+    except ValidationError as e:
         # gpt-oss-120b occasionally ignores response_format and returns
         # free-form text instead of JSON -- treat identically to a timeout.
+        # pydantic v2's model_validate_json always raises ValidationError
+        # (never a raw json.JSONDecodeError) for invalid JSON syntax too.
         logger.warning("LLM returned malformed structured output: %s (raw: %.500s)", e, raw)
         return None

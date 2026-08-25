@@ -262,3 +262,43 @@ class TestChatDegradation:
             for row in conn.execute("SELECT role FROM chat_messages ORDER BY created_at").fetchall()
         ]
         assert roles == ["user", "user"]
+
+
+class TestChatHistoryDeduplication:
+    """CR-01 regression: the message list sent to the model must never carry
+    the current turn's user_text twice -- once as the just-persisted last
+    history row, once as build_messages' explicit final turn."""
+
+    def test_second_turn_does_not_duplicate_current_message_in_llm_context(
+        self, live_chat_client, monkeypatch
+    ):
+        captured_messages: list[list[dict]] = []
+
+        def _capture_completion(*args, **kwargs):
+            captured_messages.append(kwargs["messages"])
+
+            class _Message:
+                content = '{"message": "ok", "trades": [], "watchlist_changes": []}'
+
+            class _Choice:
+                message = _Message()
+
+            class _Response:
+                choices = [_Choice()]
+
+            return _Response()
+
+        monkeypatch.setattr(client_module.litellm, "completion", _capture_completion)
+        client, _conn = live_chat_client
+
+        client.post("/api/chat", json={"message": "First turn message"})
+        client.post("/api/chat", json={"message": "Second turn message"})
+
+        assert len(captured_messages) == 2
+        second_turn_messages = captured_messages[1]
+        user_texts = [m["content"] for m in second_turn_messages if m["role"] == "user"]
+        occurrences = user_texts.count("Second turn message")
+        assert occurrences == 1, (
+            f"'Second turn message' appeared {occurrences} times in the model context "
+            f"(expected exactly 1): {user_texts}"
+        )

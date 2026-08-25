@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { render, screen, fireEvent, waitFor, cleanup } from "@testing-library/react";
 
 import { WatchlistPanel } from "@/components/WatchlistPanel";
 import type { PriceTick } from "@/hooks/usePriceStream";
@@ -48,6 +48,10 @@ describe("WatchlistPanel", () => {
   beforeEach(() => {
     fetchMock = vi.fn();
     global.fetch = fetchMock as unknown as typeof fetch;
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   it("flashes flash-up on the row when the price ticks up", async () => {

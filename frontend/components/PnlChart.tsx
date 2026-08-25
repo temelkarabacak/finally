@@ -10,6 +10,7 @@ import {
 } from "lightweight-charts";
 
 import type { PnlPoint } from "@/hooks/usePortfolio";
+import { formatCurrency } from "@/lib/format";
 
 type PnlChartProps = {
   points: PnlPoint[];
@@ -49,6 +50,9 @@ export function PnlChart({ points, error, ready }: PnlChartProps) {
       },
       rightPriceScale: {
         borderColor: "#30363d",
+      },
+      localization: {
+        priceFormatter: formatCurrency,
       },
     });
     const series = chart.addSeries(LineSeries, {

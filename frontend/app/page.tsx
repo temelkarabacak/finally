@@ -117,9 +117,12 @@ export default function Home() {
       {/*
         ChatDrawer is a sibling of <main>, not a child: its fixed
         positioning overlays the trading grid (D-02) instead of
-        participating in the flex column layout above.
+        participating in the flex column layout above. onActionsExecuted
+        reuses the same refresh callback TradeBar uses, so a chat-executed
+        fill updates the header/positions/heatmap/P&L panels identically to
+        a manual fill.
       */}
-      <ChatDrawer />
+      <ChatDrawer onActionsExecuted={refresh} />
     </>
   );
 }

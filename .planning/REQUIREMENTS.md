@@ -44,7 +44,7 @@ Requirements for this milestone (the whole remaining platform, per PLAN.md). Eac
 - [x] **UI-02**: Prices flash green (uptick) or red (downtick) with a fading CSS animation on change
 - [x] **UI-03**: Clicking a watchlist ticker shows a larger price chart for that ticker in the main chart area
 - [x] **UI-04**: Portfolio heatmap (treemap) sized by position weight, colored by P&L
-- [ ] **UI-05**: P&L line chart of total portfolio value over time
+- [x] **UI-05**: P&L line chart of total portfolio value over time
 - [x] **UI-06**: Positions table (ticker, quantity, avg cost, current price, unrealized P&L, % change)
 - [ ] **UI-07**: Trade bar lets the user submit a buy or sell market order (ticker, quantity, buy/sell buttons)
 - [ ] **UI-08**: Docked/collapsible AI chat panel with loading state and inline trade/watchlist action confirmations
@@ -110,7 +110,7 @@ Populated during roadmap creation (2026-08-23).
 | UI-02 | Phase 1 | Complete |
 | UI-03 | Phase 1 | Complete |
 | UI-04 | Phase 2 | Complete |
-| UI-05 | Phase 2 | Pending |
+| UI-05 | Phase 2 | Complete |
 | UI-06 | Phase 2 | Complete |
 | UI-07 | Phase 2 | Pending |
 | UI-08 | Phase 3 | Pending |

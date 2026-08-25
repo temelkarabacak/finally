@@ -111,7 +111,7 @@ Plans:
   4. Conversation history survives a page reload, and a request that hangs past 30 seconds returns a generic retry message with no trade executed and no failed attempt left in the history
   5. With `LLM_MOCK=true` the chat returns deterministic responses without calling OpenRouter, so the full backend and frontend unit suites run offline and green — covering structured-output parsing (including malformed responses), portfolio/watchlist/chat route status codes and response shapes, and UI components (price flash, watchlist CRUD, portfolio calculations, chat rendering and loading state)
 
-**Plans**: 1/4 plans executed
+**Plans**: 3/4 plans executed
 
 Plans:
 **Wave 1**
@@ -120,8 +120,8 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 03-02-PLAN.md — Auto-executed trades and watchlist changes through the existing validated paths, the 12-scenario mock rule table, and inline success/REJECTED confirmation cards (CHAT-02, CHAT-03, CHAT-06, UI-08)
-- [ ] 03-03-PLAN.md — Test backfill: portfolio/watchlist route status-code and response-shape matrix, plus the first frontend tests (price flash, watchlist CRUD, portfolio calculations) (TEST-03, TEST-04)
+- [x] 03-02-PLAN.md — Auto-executed trades and watchlist changes through the existing validated paths, the 12-scenario mock rule table, and inline success/REJECTED confirmation cards (CHAT-02, CHAT-03, CHAT-06, UI-08)
+- [x] 03-03-PLAN.md — Test backfill: portfolio/watchlist route status-code and response-shape matrix, plus the first frontend tests (price flash, watchlist CRUD, portfolio calculations) (TEST-03, TEST-04)
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
@@ -166,7 +166,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 |-------|----------------|--------|-----------|
 | 1. Live Market Terminal | 3/3 | Complete    | 2026-08-23 |
 | 2. Portfolio & Trading | 4/4 | Complete    | 2026-08-25 |
-| 3. AI Copilot | 1/4 | In Progress|  |
+| 3. AI Copilot | 3/4 | In Progress|  |
 | 4. One-Command Deployment | 0/TBD | Not started | - |
 
 ## Requirement Coverage

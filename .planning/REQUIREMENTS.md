@@ -36,7 +36,7 @@ Requirements for this milestone (the whole remaining platform, per PLAN.md). Eac
 - [x] **CHAT-03**: The LLM's response can include watchlist changes that auto-execute
 - [ ] **CHAT-04**: Chat history (last 20 messages) persists across requests; the user's message is saved before the LLM call, the assistant's after successful completion
 - [ ] **CHAT-05**: A chat request that exceeds a 30-second LLM timeout aborts with a generic retry message and executes no trade; the failed attempt is not persisted to chat history
-- [ ] **CHAT-06**: When `LLM_MOCK=true`, the backend returns deterministic mock responses instead of calling OpenRouter
+- [x] **CHAT-06**: When `LLM_MOCK=true`, the backend returns deterministic mock responses instead of calling OpenRouter
 
 ### Frontend UI
 
@@ -105,7 +105,7 @@ Populated during roadmap creation (2026-08-23).
 | CHAT-03 | Phase 3 | Complete |
 | CHAT-04 | Phase 3 | Pending |
 | CHAT-05 | Phase 3 | Pending |
-| CHAT-06 | Phase 3 | Pending |
+| CHAT-06 | Phase 3 | Complete |
 | UI-01 | Phase 1 | Complete |
 | UI-02 | Phase 1 | Complete |
 | UI-03 | Phase 1 | Complete |

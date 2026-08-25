@@ -1,44 +1,44 @@
 ---
 gsd_state_version: 1.0
-current_phase: 02
-current_phase_name: Portfolio & Trading
-status: executing
-stopped_at: Completed 02-03-PLAN.md
-last_updated: "2026-08-25T06:34:25.645Z"
+current_phase: 3
+current_phase_name: AI Copilot
+status: planning
+stopped_at: Phase 02 complete, ready to plan Phase 3
+last_updated: "2026-08-25T07:48:04.490Z"
 last_activity: 2026-08-25
-last_activity_desc: Phase 02 execution started
-state_head: 3d2c7e9c1899c4e5813abcaf2c28d762604727ae
+last_activity_desc: Phase 02 complete, transitioned to Phase 3
+state_head: 61320a634d3f434b598357bcf59c897d66f58c49
 progress:
   total_phases: 4
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 7
-  completed_plans: 6
-  percent: 25
+  completed_plans: 7
+  percent: 50
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-08-23)
+See: .planning/PROJECT.md (updated 2026-08-25)
 
 **Core value:** A user can launch the app with one command, watch live prices stream in, buy/sell shares instantly, and ask the AI assistant to analyze or trade on their behalf — and it just works, end to end, in a single Docker container.
-**Current focus:** Phase 02 — Portfolio & Trading
+**Current focus:** Phase 3 — AI Copilot
 
 ## Current Position
 
-Phase: 02 (Portfolio & Trading) — EXECUTING
-Plan: 1 of 4
-Status: Executing Phase 02
-Last activity: 2026-08-25 — Phase 02 execution started
+Phase: 3 — AI Copilot
+Plan: Not started
+Status: Ready to plan
+Last activity: 2026-08-25 — Phase 02 complete, transitioned to Phase 3
 
-Progress: [███░░░░░░░] 25%
+Progress: [█████░░░░░] 50%
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 3
+- Total plans completed: 7
 - Average duration: -
 - Total execution time: 0.0 hours
 
@@ -47,6 +47,7 @@ Progress: [███░░░░░░░] 25%
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 01 | 3 | - | - |
+| 02 | 4 | - | - |
 
 **Recent Trend:**
 
@@ -74,6 +75,8 @@ Recent decisions affecting current work:
 - [Roadmap]: TEST-03/TEST-04 assigned to Phase 3 — they span routes and components from Phases 1-2, but land with `LLM_MOCK` which makes the suites fast and offline
 - [Phase 02]: Task 2's blocking-human package-legitimacy checkpoint for recharts was approved by the user (58.5M weekly downloads, canonical recharts/recharts GitHub org, version history since 0.1.0) before npm install ran
 - [Phase 02]: PortfolioHeatmap's HeatmapCell declares selected/onSelect as required props with a direct onSelect(ticker) call, avoiding Recharts' cloneElement prop-merge shadowing custom props
+- [Phase 02]: Gap G-02-4 fixed by polling `/api/portfolio/history` every 10s in `usePortfolio.ts` instead of fetching only on mount/post-trade, so the P&L panel resolves its empty state without requiring a trade
+- [Phase 02]: Security review (`02-SECURITY.md`) closed all 22 registered threats at ASVS L1 via grep-depth evidence — 16 mitigated, 6 accepted (append-only trade log, no-op package installs, low-sensitivity polling/response bodies)
 
 ### Pending Todos
 
@@ -85,7 +88,7 @@ None yet.
 - [Phase 1, non-blocking]: `FailoverMarketDataSource`'s Massive→simulator swap has an unsynchronized read race on `_active`, and `MassiveDataSource.stop()`'s self-cancellation relies on asyncio scheduling order rather than a guaranteed contract; both currently work but are worth hardening
 - [Phase 1, non-blocking]: Watchlist router doesn't guard a market-source exception thrown after the DB write already succeeded (partial-failure edge case)
 - [Phase 4]: `scripts/smoke.sh`'s cleanup trap can hang indefinitely if an SSE connection is still open when it sends SIGTERM to uvicorn — surfaced twice during Phase 1 (manual run + verifier run, both needed a manual force-kill). Worth fixing before Docker/E2E lifecycle management is built on top of it
-- [Phase 2]: SQLite allows one writer at a time; the 30s snapshot task, trade writes, and chat writes need serialized access (WAL mode or a write queue)
+- [Phase 3]: SQLite allows one writer at a time; the 30s snapshot task and trade writes are proven non-interleaving on the single-threaded event loop (Phase 2 security review, T-02-11), but chat writes (Phase 3) still need the same "no await inside the transaction" discipline applied
 - [Phase 3]: `litellm` and `pydantic` are not in `backend/pyproject.toml` — must be added via `uv add` before the LLM module can be built
 
 ### Quick Tasks Completed
@@ -105,5 +108,5 @@ Items acknowledged and deferred at milestone close, most recent first:
 ## Session Continuity
 
 Last session: 2026-08-24T20:16:50.799Z
-Stopped at: Completed 02-03-PLAN.md - Completed quick task 260825-ddv: Format P&L chart currency values with thousands separators
+Stopped at: Phase 02 complete, ready to plan Phase 3
 Resume file: None

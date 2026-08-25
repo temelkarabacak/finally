@@ -14,7 +14,7 @@ FinAlly starts from a completed market data subsystem (`backend/app/market/`) an
 Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Live Market Terminal** - Stand up the app end to end: FastAPI + SQLite + watchlist + streaming price UI (completed 2026-08-23)
-- [ ] **Phase 2: Portfolio & Trading** - Buy and sell shares, watch positions, P&L, and portfolio visualizations update live
+- [x] **Phase 2: Portfolio & Trading** - Buy and sell shares, watch positions, P&L, and portfolio visualizations update live (completed 2026-08-25)
 - [ ] **Phase 3: AI Copilot** - Chat with an assistant that analyzes the portfolio and auto-executes trades and watchlist changes
 - [ ] **Phase 4: One-Command Deployment** - Ship as a single container with persistent data, start/stop scripts, and E2E verification
 
@@ -150,7 +150,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Live Market Terminal | 3/3 | Complete    | 2026-08-23 |
-| 2. Portfolio & Trading | 4/4 | In Progress|  |
+| 2. Portfolio & Trading | 4/4 | Complete    | 2026-08-25 |
 | 3. AI Copilot | 0/TBD | Not started | - |
 | 4. One-Command Deployment | 0/TBD | Not started | - |
 

@@ -23,17 +23,19 @@ A user can launch the app with one command, watch live prices stream in, buy/sel
 - ✓ Massive API permanent failover to simulator on auth/rate-limit/network/service errors (never switches back) — Phase 1, `backend/app/market/failover.py`
 - ✓ Watchlist grid with price flash animations + progressive sparklines, main price chart (Lightweight Charts) for the selected ticker — Phase 1, `frontend/components/{WatchlistPanel,Sparkline,PriceChart}.tsx`
 - ✓ Dark trading-terminal theme (`#0d1117`/`#1a1a2e` backgrounds, accent yellow `#ecad0a`, blue `#209dd7`, purple `#753991`) — Phase 1, `frontend/app/globals.css`; human-verified against all 9 checkpoint items
+- ✓ Portfolio endpoints: positions, cash, P&L, trade execution (market orders, fractional shares, buy/sell validation rejected outright, never clamped) — Phase 2, `backend/app/portfolio/`
+- ✓ Portfolio value snapshot recording (30s background task + immediately after each trade) for the P&L chart — Phase 2, `backend/app/portfolio/snapshots.py`
+- ✓ Portfolio heatmap (treemap), P&L line chart, positions table, trade bar, header with live connection status and portfolio value — Phase 2, `frontend/components/{PortfolioHeatmap,PnlChart,PositionsTable,TradeBar}.tsx`; human-verified via UAT (8/8 passed)
+- ✓ Backend unit tests (pytest) for trade execution, valuation, snapshot recording, and portfolio/watchlist routes — Phase 2, `backend/tests/portfolio/`
 
 ### Active
 
 Remaining platform from `planning/PLAN.md`, structured as vertical MVP slices (each phase delivers an end-to-end user capability, not just a technical layer):
 
-- [ ] Portfolio endpoints: positions, cash, P&L, trade execution (market orders, fractional shares, buy/sell validation)
-- [ ] Portfolio value snapshot recording (every 30s + after each trade) for the P&L chart
 - [ ] AI-driven watchlist changes (via LLM chat, on top of Phase 1's manual CRUD)
 - [ ] LLM chat integration via LiteLLM → OpenRouter (Cerebras inference, `openai/gpt-oss-120b`), structured output schema, auto-executed trades/watchlist changes, 30s timeout with generic retry message, mock mode (`LLM_MOCK=true`) for tests
-- [ ] Portfolio heatmap (treemap), P&L line chart, positions table, trade bar, AI chat panel, header with connection status and live portfolio value
-- [ ] Backend unit tests (pytest) for portfolio, LLM, API routes beyond what market data and Phase 1 already have
+- [ ] AI chat panel (docked/collapsible, inline trade/watchlist confirmations)
+- [ ] Backend unit tests (pytest) for LLM structured-output parsing and chat routes
 - [ ] Frontend unit tests (React Testing Library or similar)
 - [ ] Playwright E2E tests in `test/` (docker-compose.test.yml) covering fresh start, watchlist CRUD, buy/sell, visualizations, AI chat, SSE reconnection
 - [ ] Multi-stage Dockerfile (Node build → Python runtime), single port 8000, volume-mounted SQLite
@@ -79,6 +81,10 @@ Remaining platform from `planning/PLAN.md`, structured as vertical MVP slices (e
 | `FailoverMarketDataSource` does a lock-guarded, idempotent, one-way swap to the simulator on first Massive error | Matches PLAN.md §6's "permanent failover, never switches back" contract; avoids flapping between sources | Shipped — Phase 1 |
 | Dark theme tokens locked: up `#3fb950`, down `#f85149`, border `#30363d`, text `#e6edf3`, muted `#8b949e`; charting via `lightweight-charts@5.2.1` | Human-verified live against all 9 checkpoint items (theme, flash calmness, reduced-motion, sparklines, chart) | Shipped — Phase 1 |
 | Accepted npm registry's `react`/`react-dom` repo listing as `github.com/react/react` (not the historical `facebook/react`) as a legitimate org migration | Verified via live registry lookup before any install; no `[SLOP]` verdict, versions matched RESEARCH.md's audit exactly | Shipped — Phase 1 |
+| Trade transaction wraps four writes (cash, position, trade log, snapshot) in explicit `BEGIN`/`COMMIT`/`ROLLBACK` rather than relying on `autocommit` | SQLite `Connection.commit()` is a documented no-op in this connection mode; explicit transaction boundaries are the only way to guarantee all-or-nothing trade writes | Shipped — Phase 2 |
+| `recharts` accepted for the heatmap after a blocking-human legitimacy checkpoint | `02-RESEARCH.md`'s automated recency heuristic flagged `[SUS]`; human confirmed 58.5M weekly downloads, canonical `recharts/recharts` org, and multi-year version history before install | Shipped — Phase 2 |
+| `usePortfolio.ts` polls `/api/portfolio/history` every 10s instead of only on mount/post-trade | Gap-closure fix (G-02-4): the mount-only fetch raced the backend's first 30s snapshot, leaving the P&L panel stuck on the empty state indefinitely with no trade | Shipped — Phase 2 |
+| Currency values in the header and P&L chart formatted with thousands separators via a shared `frontend/lib/format.ts` helper | User-requested display fix; pinned to `en-US` locale for deterministic output regardless of viewer's browser language | Shipped — Phase 2 (quick task) |
 
 ## Evolution
 
@@ -98,4 +104,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-08-23 after Phase 1*
+*Last updated: 2026-08-25 after Phase 2*

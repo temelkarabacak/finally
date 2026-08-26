@@ -149,7 +149,13 @@ Plans:
   3. Start and stop scripts work and are safe to run repeatedly on both macOS/Linux (`start_mac.sh`, `stop_mac.sh`) and Windows (`start_windows.ps1`, `stop_windows.ps1`); stopping never destroys the data volume
   4. The Playwright E2E suite runs against the container with `LLM_MOCK=true` and passes: fresh start with seeded watchlist and $10k, watchlist add/remove, buy and sell, heatmap and P&L chart rendering, AI chat with an inline trade, and SSE reconnection after a disconnect
 
-**Plans**: TBD
+**Plans**: 4 plans
+
+Plans:
+- [ ] 04-01-PLAN.md — Multi-stage Dockerfile and `.dockerignore`: one container serving frontend + API + SSE + chat on port 8000, with SQLite persisting through the `db/` bind mount and a bounded graceful shutdown (DEPLOY-01, DEPLOY-02)
+- [ ] 04-02-PLAN.md — Idempotent start/stop lifecycle scripts for macOS/Linux and Windows; stopping never destroys the data directory (DEPLOY-03)
+- [ ] 04-03-PLAN.md — Playwright project and `docker-compose.test.yml` harness (mocked LLM, ephemeral DB, healthcheck-gated) plus the fresh-start E2E scenario (TEST-05)
+- [ ] 04-04-PLAN.md — Remaining E2E scenarios: watchlist add/remove, buy/sell, heatmap and P&L rendering, AI chat inline trade, SSE reconnection (TEST-05)
 
 **Notes**:
 

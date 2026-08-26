@@ -57,7 +57,7 @@ Requirements for this milestone (the whole remaining platform, per PLAN.md). Eac
 - [x] **TEST-02**: Backend unit tests cover LLM structured-output parsing, including malformed responses
 - [x] **TEST-03**: Backend unit tests cover API route status codes and response shapes for portfolio/watchlist/chat
 - [x] **TEST-04**: Frontend unit tests cover price flash animation, watchlist CRUD, portfolio calculations, and chat rendering/loading state
-- [ ] **TEST-05**: Playwright E2E suite (`test/`, `LLM_MOCK=true`) covers fresh start, watchlist add/remove, buy/sell, visualizations, AI chat, and SSE reconnection
+- [x] **TEST-05**: Playwright E2E suite (`test/`, `LLM_MOCK=true`) covers fresh start, watchlist add/remove, buy/sell, visualizations, AI chat, and SSE reconnection
 
 ### Deployment
 
@@ -120,7 +120,7 @@ Populated during roadmap creation (2026-08-23).
 | TEST-02 | Phase 3 | Complete |
 | TEST-03 | Phase 3 | Complete |
 | TEST-04 | Phase 3 | Complete |
-| TEST-05 | Phase 4 | Pending |
+| TEST-05 | Phase 4 | Complete |
 | DEPLOY-01 | Phase 4 | Complete |
 | DEPLOY-02 | Phase 4 | Complete |
 | DEPLOY-03 | Phase 4 | Complete |

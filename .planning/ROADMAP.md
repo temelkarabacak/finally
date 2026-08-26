@@ -149,12 +149,12 @@ Plans:
   3. Start and stop scripts work and are safe to run repeatedly on both macOS/Linux (`start_mac.sh`, `stop_mac.sh`) and Windows (`start_windows.ps1`, `stop_windows.ps1`); stopping never destroys the data volume
   4. The Playwright E2E suite runs against the container with `LLM_MOCK=true` and passes: fresh start with seeded watchlist and $10k, watchlist add/remove, buy and sell, heatmap and P&L chart rendering, AI chat with an inline trade, and SSE reconnection after a disconnect
 
-**Plans**: 4 plans
+**Plans**: 1/4 plans executed
 
 Plans:
 **Wave 1**
 
-- [ ] 04-01-PLAN.md — Multi-stage Dockerfile and `.dockerignore`: one container serving frontend + API + SSE + chat on port 8000, with SQLite persisting through the `db/` bind mount and a bounded graceful shutdown (DEPLOY-01, DEPLOY-02)
+- [x] 04-01-PLAN.md — Multi-stage Dockerfile and `.dockerignore`: one container serving frontend + API + SSE + chat on port 8000, with SQLite persisting through the `db/` bind mount and a bounded graceful shutdown (DEPLOY-01, DEPLOY-02)
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
@@ -181,7 +181,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 | 1. Live Market Terminal | 3/3 | Complete    | 2026-08-23 |
 | 2. Portfolio & Trading | 4/4 | Complete    | 2026-08-25 |
 | 3. AI Copilot | 4/4 | Complete    | 2026-08-26 |
-| 4. One-Command Deployment | 0/TBD | Not started | - |
+| 4. One-Command Deployment | 1/4 | In Progress|  |
 
 ## Requirement Coverage
 

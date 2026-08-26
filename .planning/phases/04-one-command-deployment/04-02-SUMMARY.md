@@ -124,6 +124,16 @@ None - no external service configuration required.
 ## Next Phase Readiness
 `scripts/start_mac.sh`, `scripts/stop_mac.sh`, `scripts/start_windows.ps1`, and `scripts/stop_windows.ps1` are all in place, executable where applicable, and the bash pair is live-verified against this host's Docker Engine. The PowerShell pair is statically verified (all grep-based acceptance criteria pass) with its real-Windows idempotency run correctly queued as an end-of-phase human check per the plan's own `<verify><human-check>` and 04-RESEARCH.md Assumption A2. Ready for 04-03 (Wave 3) once 04-03 also completes.
 
+## Self-Check: PASSED
+
+- FOUND: scripts/start_mac.sh
+- FOUND: scripts/stop_mac.sh
+- FOUND: scripts/start_windows.ps1
+- FOUND: scripts/stop_windows.ps1
+- FOUND: commit 5fd63fe (Task 1)
+- FOUND: commit 0014cb5 (Task 2)
+- FOUND: commit 3159dcd (plan metadata)
+
 ---
 *Phase: 04-one-command-deployment*
 *Completed: 2026-08-26*

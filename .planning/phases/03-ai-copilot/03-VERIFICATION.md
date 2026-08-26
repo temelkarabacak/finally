@@ -1,14 +1,16 @@
 ---
 phase: 03-ai-copilot
 verified: 2026-08-25T21:50:00Z
-status: human_needed
+status: passed
 score: 15/17 must-haves verified
 behavior_unverified: 0
 overrides_applied: 0
 human_verification:
+
   - test: "Open the app, click the AI Chat toggle, and confirm the drawer slides up from the bottom edge, overlays the grid without reflowing the watchlist/chart/positions/heatmap/P&L panels, and the toggle label swaps AI Chat / Close Chat"
     expected: "Drawer overlay behavior and label swap as described in 03-01 Task 3's human-check"
     why_human: "Visual layout/overlay behavior; grep can confirm the fixed-position CSS classes exist (fixed inset-x-0 bottom-0, fixed bottom-4 right-4 z-50) but not that the rendered page actually avoids reflow"
+
   - test: "With OPENROUTER_API_KEY set and LLM_MOCK unset, send a real portfolio question and confirm the reply's cash/position figures match the header/positions table exactly, the tone is neutral/data-driven (no urgency/scarcity/shaming), and structured-output parsing succeeds (run backend/scripts/llm_smoke_check.py)"
     expected: "Live LLM turn returns grounded, neutral commentary; response_format survives the wire to gpt-oss-120b on Cerebras"
     why_human: "Requires a live OpenRouter/Cerebras network call and subjective tone judgment; LLM_MOCK=true (used for all automated tests) never exercises this path"

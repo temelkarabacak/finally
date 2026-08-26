@@ -50,10 +50,10 @@ export default function Home() {
   }, [refresh]);
 
   return (
-    <>
+    <div className="flex min-h-0 flex-1">
       <main
         data-testid="terminal-root"
-        className="flex flex-1 flex-col gap-4 bg-terminal-bg p-6 text-terminal-text"
+        className="flex min-w-0 flex-1 flex-col gap-4 bg-terminal-bg p-6 text-terminal-text"
       >
         <header className="flex items-center justify-between border-b border-terminal-border pb-3">
           <h1 className="text-xl font-semibold text-accent-yellow">FinAlly</h1>
@@ -126,14 +126,15 @@ export default function Home() {
       </main>
 
       {/*
-        ChatDrawer is a sibling of <main>, not a child: its fixed
-        positioning overlays the trading grid (D-02) instead of
-        participating in the flex column layout above. onActionsExecuted
-        reuses the same refreshAll callback TradeBar uses, so a chat-executed
-        fill or watchlist change updates the header/positions/heatmap/P&L
-        panels and the watchlist grid identically to a manual one.
+        ChatDrawer is a flex sibling of <main> in the row wrapper above, not
+        a child of it: when open it renders a fixed-width sidebar that
+        shrinks <main> (which is min-w-0 flex-1) rather than overlaying it.
+        onActionsExecuted reuses the same refreshAll callback TradeBar uses,
+        so a chat-executed fill or watchlist change updates the
+        header/positions/heatmap/P&L panels and the watchlist grid
+        identically to a manual one.
       */}
       <ChatDrawer onActionsExecuted={refreshAll} />
-    </>
+    </div>
   );
 }

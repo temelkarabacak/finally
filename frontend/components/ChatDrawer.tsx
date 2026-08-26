@@ -17,9 +17,12 @@ type ChatDrawerProps = {
 const QUICK_PROMPTS = ["Analyze my portfolio", "What should I buy?", "Add a ticker to watchlist"];
 
 /**
- * Collapsed-by-default bottom-drawer overlay (D-01/D-02/D-03): a fixed
- * toggle pill plus a fixed-height panel that slides up over the trading
- * grid without reflowing it. See 03-UI-SPEC.md Layout & Composition.
+ * Collapsed-by-default right-hand panel: a fixed toggle pill when closed,
+ * a fixed-width sidebar sharing the flex row with <main> when open -- it
+ * pushes/reflows the trading grid rather than overlaying it (user request,
+ * superseding the original D-01/D-02 bottom-overlay decisions). The parent
+ * page.tsx wraps <main> and this component in a flex row so the sidebar's
+ * width is subtracted from <main>'s available space.
  */
 export function ChatDrawer({ onActionsExecuted }: ChatDrawerProps) {
   const [open, setOpen] = useState(false);
@@ -48,73 +51,81 @@ export function ChatDrawer({ onActionsExecuted }: ChatDrawerProps) {
 
   const showQuickPrompts = historyLoaded && messages.length === 0;
 
-  return (
-    <>
+  if (!open) {
+    return (
       <button
         type="button"
-        onClick={() => setOpen((value) => !value)}
+        onClick={() => setOpen(true)}
         data-testid="chat-toggle"
         className="fixed bottom-4 right-4 z-50 rounded border border-terminal-border bg-terminal-panel px-3 py-1 text-sm font-medium text-terminal-text hover:opacity-90"
       >
-        {open ? "Close Chat" : "AI Chat"}
+        AI Chat
       </button>
+    );
+  }
 
-      {open && (
-        <div
-          data-testid="chat-drawer"
-          className="fixed inset-x-0 bottom-0 z-40 flex h-96 flex-col border-t border-terminal-border bg-terminal-bg"
+  return (
+    <div
+      data-testid="chat-drawer"
+      className="flex h-full w-96 flex-shrink-0 flex-col border-l border-terminal-border bg-terminal-bg"
+    >
+      <div className="flex items-center justify-between border-b border-terminal-border p-3">
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-accent-yellow">
+          AI Chat
+        </h2>
+        <button
+          type="button"
+          onClick={() => setOpen(false)}
+          data-testid="chat-toggle"
+          className="rounded border border-terminal-border bg-terminal-panel px-3 py-1 text-sm font-medium text-terminal-text hover:opacity-90"
         >
-          <div className="border-b border-terminal-border p-3">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-accent-yellow">
-              AI Chat
-            </h2>
+          Close Chat
+        </button>
+      </div>
+
+      <ChatMessageList messages={messages} historyLoaded={historyLoaded} sending={sending} />
+
+      {showQuickPrompts && (
+        <div className="border-t border-terminal-border p-3">
+          <p className="mb-2 text-sm text-terminal-muted">
+            Ask about your portfolio, or tell me what to trade.
+          </p>
+          <div className="flex flex-wrap gap-2" data-testid="chat-quick-prompts">
+            {QUICK_PROMPTS.map((prompt) => (
+              <button
+                key={prompt}
+                type="button"
+                onClick={() => handleQuickPrompt(prompt)}
+                className="rounded bg-accent-purple px-3 py-1 text-sm font-medium text-terminal-text hover:opacity-90"
+              >
+                {prompt}
+              </button>
+            ))}
           </div>
-
-          <ChatMessageList messages={messages} historyLoaded={historyLoaded} sending={sending} />
-
-          {showQuickPrompts && (
-            <div className="border-t border-terminal-border p-3">
-              <p className="mb-2 text-sm text-terminal-muted">
-                Ask about your portfolio, or tell me what to trade.
-              </p>
-              <div className="flex flex-wrap gap-2" data-testid="chat-quick-prompts">
-                {QUICK_PROMPTS.map((prompt) => (
-                  <button
-                    key={prompt}
-                    type="button"
-                    onClick={() => handleQuickPrompt(prompt)}
-                    className="rounded bg-accent-purple px-3 py-1 text-sm font-medium text-terminal-text hover:opacity-90"
-                  >
-                    {prompt}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          <form
-            className="flex items-center gap-2 border-t border-terminal-border p-3"
-            onSubmit={handleSubmit}
-          >
-            <textarea
-              value={draft}
-              onChange={(event) => setDraft(event.target.value)}
-              placeholder="Ask FinAlly..."
-              data-testid="chat-input"
-              rows={1}
-              className="max-h-24 flex-1 resize-none overflow-y-auto rounded border border-terminal-border bg-terminal-bg px-2 py-1 text-sm text-terminal-text"
-            />
-            <button
-              type="submit"
-              disabled={sending || draft.trim().length === 0}
-              data-testid="chat-send"
-              className="rounded bg-accent-purple px-3 py-1 text-sm font-medium text-terminal-text hover:opacity-90 disabled:opacity-40"
-            >
-              {sending ? "Sending…" : "Send"}
-            </button>
-          </form>
         </div>
       )}
-    </>
+
+      <form
+        className="flex items-center gap-2 border-t border-terminal-border p-3"
+        onSubmit={handleSubmit}
+      >
+        <textarea
+          value={draft}
+          onChange={(event) => setDraft(event.target.value)}
+          placeholder="Ask FinAlly..."
+          data-testid="chat-input"
+          rows={1}
+          className="max-h-24 flex-1 resize-none overflow-y-auto rounded border border-terminal-border bg-terminal-bg px-2 py-1 text-sm text-terminal-text"
+        />
+        <button
+          type="submit"
+          disabled={sending || draft.trim().length === 0}
+          data-testid="chat-send"
+          className="rounded bg-accent-purple px-3 py-1 text-sm font-medium text-terminal-text hover:opacity-90 disabled:opacity-40"
+        >
+          {sending ? "Sending…" : "Send"}
+        </button>
+      </form>
+    </div>
   );
 }

@@ -1,0 +1,39 @@
+# Version control / GSD planning / editor tooling — never needed inside the image
+.git
+.github
+.planning
+planning
+.claude
+.gsd
+
+# Secrets — load-bearing: keeps OPENROUTER_API_KEY / MASSIVE_API_KEY out of every
+# image layer. Secrets enter the container only at run time via `--env-file`.
+.env
+.env.*
+
+# Node dependencies / build caches — rebuilt fresh inside the frontend-builder stage
+node_modules
+frontend/node_modules
+frontend/.next
+frontend/out
+frontend/tsconfig.tsbuildinfo
+
+# Python virtualenv — rebuilt fresh inside the backend-builder stage
+backend/.venv
+
+# Load-bearing: a stale local static export must never merge with the fresh one
+# produced by the frontend-builder stage.
+backend/static
+
+# Backend tests — not needed at runtime
+backend/tests
+
+# Python bytecode caches
+**/__pycache__
+*.pyc
+
+# Runtime SQLite data / bind-mount target — never baked into the image
+db
+
+# E2E test harness — kept out of the production image per PLAN.md §12
+test

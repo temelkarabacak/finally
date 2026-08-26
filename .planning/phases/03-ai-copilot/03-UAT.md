@@ -1,22 +1,14 @@
 ---
-status: testing
+status: complete
 phase: 03-ai-copilot
 source: [03-VERIFICATION.md]
 started: 2026-08-25T21:55:00Z
-updated: 2026-08-25T21:55:00Z
+updated: 2026-08-26T07:45:00Z
 ---
 
 ## Current Test
 
-number: 1
-name: Chat panel layout — right-hand sidebar that pushes content
-expected: |
-  Open the app, click the "AI Chat" toggle bottom-right. A ~384px-wide panel slides in from the
-  right edge and PUSHES the watchlist/chart/positions/heatmap/P&L grid to the left (grid shrinks,
-  does not get covered). The panel header shows "AI Chat" on the left and a "Close Chat" button on
-  the right — no floating button overlapping the Send button anymore. Typing a message and
-  clicking Send works without any click being intercepted.
-awaiting: user response
+[testing complete]
 
 ## Tests
 
@@ -27,7 +19,7 @@ expected: |
   does not get covered). The panel header shows "AI Chat" on the left and a "Close Chat" button on
   the right — no floating button overlapping the Send button anymore. Typing a message and
   clicking Send works without any click being intercepted.
-result: [pending]
+result: pass
 note: |
   Originally specified (and shipped in 03-01/03-04) as a bottom-overlay drawer per CONTEXT.md
   decisions D-01/D-02. First UAT pass on that design found a real bug: the fixed "Close Chat"
@@ -45,14 +37,14 @@ expected: |
   cash/position figures match the header/positions table exactly; structured-output parsing
   (response_format=ChatResponse) succeeds against the real Cerebras endpoint; tone is neutral and
   data-driven with no urgency/scarcity/shaming framing.
-result: [pending]
+result: pass
 
 ## Summary
 
 total: 2
-passed: 0
+passed: 2
 issues: 0
-pending: 2
+pending: 0
 skipped: 0
 blocked: 0
 

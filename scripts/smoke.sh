@@ -36,6 +36,7 @@ fi
 
 echo "==> Starting uvicorn (FINALLY_DB_PATH=${TMP_DB})"
 uv run --directory "${BACKEND_DIR}" --extra dev uvicorn app.main:app --host 127.0.0.1 --port 8000 \
+    --timeout-graceful-shutdown 10 \
     >/tmp/finally-smoke-server.log 2>&1 &
 SERVER_PID=$!
 

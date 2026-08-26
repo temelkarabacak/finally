@@ -149,7 +149,7 @@ Plans:
   3. Start and stop scripts work and are safe to run repeatedly on both macOS/Linux (`start_mac.sh`, `stop_mac.sh`) and Windows (`start_windows.ps1`, `stop_windows.ps1`); stopping never destroys the data volume
   4. The Playwright E2E suite runs against the container with `LLM_MOCK=true` and passes: fresh start with seeded watchlist and $10k, watchlist add/remove, buy and sell, heatmap and P&L chart rendering, AI chat with an inline trade, and SSE reconnection after a disconnect
 
-**Plans**: 3/4 plans executed
+**Plans**: 4/4 plans executed
 
 Plans:
 **Wave 1**
@@ -163,7 +163,7 @@ Plans:
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
-- [ ] 04-04-PLAN.md — Remaining E2E scenarios: watchlist add/remove, buy/sell, heatmap and P&L rendering, AI chat inline trade, SSE reconnection (TEST-05)
+- [x] 04-04-PLAN.md — Remaining E2E scenarios: watchlist add/remove, buy/sell, heatmap and P&L rendering, AI chat inline trade, SSE reconnection (TEST-05)
 
 **Notes**:
 
@@ -181,7 +181,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 | 1. Live Market Terminal | 3/3 | Complete    | 2026-08-23 |
 | 2. Portfolio & Trading | 4/4 | Complete    | 2026-08-25 |
 | 3. AI Copilot | 4/4 | Complete    | 2026-08-26 |
-| 4. One-Command Deployment | 3/4 | In Progress|  |
+| 4. One-Command Deployment | 4/4 | In Progress|  |
 
 ## Requirement Coverage
 

@@ -53,7 +53,7 @@ case "${STATE}" in
             -v "${REPO_ROOT}/db:/app/db" \
             -p "${HOST_PORT}:8000" \
             --stop-timeout 15 \
-            "${ENV_ARGS[@]}" \
+            ${ENV_ARGS[@]+"${ENV_ARGS[@]}"} \
             "${IMAGE}" >/dev/null
         ;;
 esac

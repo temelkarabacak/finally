@@ -152,9 +152,17 @@ Plans:
 **Plans**: 4 plans
 
 Plans:
+**Wave 1**
+
 - [ ] 04-01-PLAN.md — Multi-stage Dockerfile and `.dockerignore`: one container serving frontend + API + SSE + chat on port 8000, with SQLite persisting through the `db/` bind mount and a bounded graceful shutdown (DEPLOY-01, DEPLOY-02)
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
 - [ ] 04-02-PLAN.md — Idempotent start/stop lifecycle scripts for macOS/Linux and Windows; stopping never destroys the data directory (DEPLOY-03)
 - [ ] 04-03-PLAN.md — Playwright project and `docker-compose.test.yml` harness (mocked LLM, ephemeral DB, healthcheck-gated) plus the fresh-start E2E scenario (TEST-05)
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
 - [ ] 04-04-PLAN.md — Remaining E2E scenarios: watchlist add/remove, buy/sell, heatmap and P&L rendering, AI chat inline trade, SSE reconnection (TEST-05)
 
 **Notes**:

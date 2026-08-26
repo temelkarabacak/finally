@@ -149,7 +149,7 @@ Plans:
   3. Start and stop scripts work and are safe to run repeatedly on both macOS/Linux (`start_mac.sh`, `stop_mac.sh`) and Windows (`start_windows.ps1`, `stop_windows.ps1`); stopping never destroys the data volume
   4. The Playwright E2E suite runs against the container with `LLM_MOCK=true` and passes: fresh start with seeded watchlist and $10k, watchlist add/remove, buy and sell, heatmap and P&L chart rendering, AI chat with an inline trade, and SSE reconnection after a disconnect
 
-**Plans**: 1/4 plans executed
+**Plans**: 3/4 plans executed
 
 Plans:
 **Wave 1**
@@ -158,8 +158,8 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 04-02-PLAN.md — Idempotent start/stop lifecycle scripts for macOS/Linux and Windows; stopping never destroys the data directory (DEPLOY-03)
-- [ ] 04-03-PLAN.md — Playwright project and `docker-compose.test.yml` harness (mocked LLM, ephemeral DB, healthcheck-gated) plus the fresh-start E2E scenario (TEST-05)
+- [x] 04-02-PLAN.md — Idempotent start/stop lifecycle scripts for macOS/Linux and Windows; stopping never destroys the data directory (DEPLOY-03)
+- [x] 04-03-PLAN.md — Playwright project and `docker-compose.test.yml` harness (mocked LLM, ephemeral DB, healthcheck-gated) plus the fresh-start E2E scenario (TEST-05)
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
@@ -181,7 +181,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 | 1. Live Market Terminal | 3/3 | Complete    | 2026-08-23 |
 | 2. Portfolio & Trading | 4/4 | Complete    | 2026-08-25 |
 | 3. AI Copilot | 4/4 | Complete    | 2026-08-26 |
-| 4. One-Command Deployment | 1/4 | In Progress|  |
+| 4. One-Command Deployment | 3/4 | In Progress|  |
 
 ## Requirement Coverage
 

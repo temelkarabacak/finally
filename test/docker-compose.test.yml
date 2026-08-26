@@ -1,0 +1,36 @@
+services:
+  # Named "webapp", not "app": "app" is a Google-registered HSTS-preloaded
+  # gTLD baked into Chromium's static preload list, so a bare compose
+  # service literally named "app" gets every http:// navigation to it
+  # force-upgraded to https:// by the browser, failing with
+  # net::ERR_SSL_PROTOCOL_ERROR against this plain-HTTP container
+  # (confirmed by reproduction during this plan's Task 3).
+  webapp:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    environment:
+      LLM_MOCK: "true"
+      MASSIVE_API_KEY: ""
+      FINALLY_DB_PATH: /app/db/finally.db
+    tmpfs:
+      - /app/db
+    stop_grace_period: 15s
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://localhost:8000/api/health', timeout=2).status==200 else 1)"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
+
+  playwright:
+    image: mcr.microsoft.com/playwright:v1.62.1-noble
+    depends_on:
+      webapp:
+        condition: service_healthy
+    working_dir: /work
+    volumes:
+      - ./:/work
+    environment:
+      BASE_URL: http://webapp:8000
+    command: sh -c "npm ci && npx playwright test"

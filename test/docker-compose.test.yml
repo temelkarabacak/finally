@@ -1,0 +1,30 @@
+services:
+  app:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    environment:
+      LLM_MOCK: "true"
+      MASSIVE_API_KEY: ""
+      FINALLY_DB_PATH: /app/db/finally.db
+    tmpfs:
+      - /app/db
+    stop_grace_period: 15s
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://localhost:8000/api/health', timeout=2).status==200 else 1)"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
+
+  playwright:
+    image: mcr.microsoft.com/playwright:v1.62.1-noble
+    depends_on:
+      app:
+        condition: service_healthy
+    working_dir: /work
+    volumes:
+      - ./:/work
+    environment:
+      BASE_URL: http://app:8000
+    command: sh -c "npm ci && npx playwright test"

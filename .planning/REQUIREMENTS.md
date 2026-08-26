@@ -61,8 +61,8 @@ Requirements for this milestone (the whole remaining platform, per PLAN.md). Eac
 
 ### Deployment
 
-- [ ] **DEPLOY-01**: Multi-stage Dockerfile builds the Next.js export and Python backend into a single image serving port 8000
-- [ ] **DEPLOY-02**: SQLite database persists via a volume-mounted `db/` directory across container restarts
+- [x] **DEPLOY-01**: Multi-stage Dockerfile builds the Next.js export and Python backend into a single image serving port 8000
+- [x] **DEPLOY-02**: SQLite database persists via a volume-mounted `db/` directory across container restarts
 - [ ] **DEPLOY-03**: Idempotent start/stop scripts for macOS/Linux (`scripts/start_mac.sh`, `stop_mac.sh`) and Windows (`start_windows.ps1`, `stop_windows.ps1`)
 
 ## v2 Requirements
@@ -121,8 +121,8 @@ Populated during roadmap creation (2026-08-23).
 | TEST-03 | Phase 3 | Complete |
 | TEST-04 | Phase 3 | Complete |
 | TEST-05 | Phase 4 | Pending |
-| DEPLOY-01 | Phase 4 | Pending |
-| DEPLOY-02 | Phase 4 | Pending |
+| DEPLOY-01 | Phase 4 | Complete |
+| DEPLOY-02 | Phase 4 | Complete |
 | DEPLOY-03 | Phase 4 | Pending |
 
 **Coverage:**

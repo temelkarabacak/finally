@@ -12,6 +12,8 @@ A user can launch the app with one command, watch live prices stream in, buy/sel
 
 ### Validated
 
+*All items below shipped as v1.0 MVP (2026-08-27) — see `.planning/milestones/v1.0-ROADMAP.md` and `v1.0-REQUIREMENTS.md` for the full archived record.*
+
 - ✓ Pluggable market data source (simulator via GBM, or real Massive/Polygon API) behind a shared abstract interface — existing, `backend/app/market/`
 - ✓ Thread-safe in-memory price cache with versioning — existing, `backend/app/market/cache.py`
 - ✓ SSE price streaming endpoint factory — existing, `backend/app/market/stream.py`
@@ -38,7 +40,7 @@ A user can launch the app with one command, watch live prices stream in, buy/sel
 
 ### Active
 
-None — all `planning/PLAN.md` scope for this milestone has shipped (Phases 1-4). Two items were deferred to human verification rather than automated proof (see Key Decisions): real-Windows PowerShell execution, and genuine-browser SSE shutdown timing. Both passed UAT.
+None — v1.0 MVP shipped in full (all `planning/PLAN.md` scope, Phases 1-4, 37/37 requirements). Two items were deferred to human verification rather than automated proof (see Key Decisions): real-Windows PowerShell execution, and genuine-browser SSE shutdown timing. Both passed UAT. Awaiting next milestone's requirements — run `/gsd-new-milestone`.
 
 ### Out of Scope
 
@@ -52,13 +54,11 @@ None — all `planning/PLAN.md` scope for this milestone has shipped (Phases 1-4
 
 ## Context
 
-- **Brownfield, single milestone covering the whole remaining platform.** Only the market data subsystem is built; everything else (DB, portfolio, watchlist, chat/LLM, frontend, Docker) is greenfield within this repo.
-- Empty placeholder directories already exist: `backend/app/db/`, `backend/app/llm/`, `backend/app/portfolio/`, `backend/app/watchlist/` — no `.py` files yet, ready for implementation.
-- No FastAPI entry point exists yet (`backend/app/__init__.py` is minimal, no `main.py`) — this blocks running the backend at all until built.
-- `frontend/` directory exists but is empty — no Next.js project scaffolded yet.
+**Current state (post-v1.0, 2026-08-27):** The full platform described in `planning/PLAN.md` is built and shipped — FastAPI backend, six-table SQLite schema, Next.js dark-terminal frontend, LLM chat copilot, and single-container Docker deployment. ~68,400 lines of Python/TypeScript source across `backend/`, `frontend/`, and `test/`. Full backend (243+ tests) and frontend (31 tests) suites pass offline via `LLM_MOCK=true`; a 6-scenario Playwright E2E suite passes against the real production image. All milestone artifacts archived to `.planning/milestones/v1.0-*`. Known non-blocking tech debt: 4 `react-hooks/set-state-in-effect` lint warnings, a low-probability polling race in `usePortfolio.ts`, and a few accepted Docker/deployment tradeoffs (no non-root container user) — see `.planning/v1.0-MILESTONE-AUDIT.md` for the full list.
+
 - `.env` at project root already contains `OPENROUTER_API_KEY` for LLM integration.
 - Full technical spec (schema, API contracts, LLM structured-output format, Docker layout) is authoritative in `planning/PLAN.md` — treat it as the source of truth; `.planning/` (GSD) documents track execution against it.
-- Codebase map available at `.planning/codebase/` (STACK.md, ARCHITECTURE.md, STRUCTURE.md, CONVENTIONS.md, TESTING.md, INTEGRATIONS.md, CONCERNS.md).
+- Codebase map available at `.planning/codebase/` (STACK.md, ARCHITECTURE.md, STRUCTURE.md, CONVENTIONS.md, TESTING.md, INTEGRATIONS.md, CONCERNS.md) — written pre-v1.0 and describes the brownfield starting point (market-data-only), not the current shipped state.
 
 ## Constraints
 
@@ -72,9 +72,9 @@ None — all `planning/PLAN.md` scope for this milestone has shipped (Phases 1-4
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| Build the entire remaining platform in one roadmap (not a narrower slice) | User wants the full capstone scope covered in this cycle | — Pending |
-| Vertical MVP phase structure over Horizontal Layers | Backend layers (DB/portfolio/chat) are tightly coupled through shared tables; slicing by user capability avoids half-finished layers | — Pending |
-| Docker containerization as the final phase, not deferred | Milestone isn't "done" without a working single-command deployment | — Pending |
+| Build the entire remaining platform in one roadmap (not a narrower slice) | User wants the full capstone scope covered in this cycle | ✓ Good — Shipped v1.0, all 37 requirements delivered in one milestone |
+| Vertical MVP phase structure over Horizontal Layers | Backend layers (DB/portfolio/chat) are tightly coupled through shared tables; slicing by user capability avoids half-finished layers | ✓ Good — Shipped v1.0, no half-finished layers across any of the 4 phases |
+| Docker containerization as the final phase, not deferred | Milestone isn't "done" without a working single-command deployment | ✓ Good — Shipped v1.0, Phase 4 delivered single-container deployment with a passing E2E suite |
 | FastAPI floor bumped to `>=0.138.0` | `app.frontend()` (single-port static+API serving) requires it; installed 0.128.7 predates the method | Shipped — Phase 1 |
 | `httpx` added as backend dev dependency | Starlette's `TestClient` requires it; surfaced by the framework's own import error, not discretionary | Shipped — Phase 1 |
 | `FailoverMarketDataSource` does a lock-guarded, idempotent, one-way swap to the simulator on first Massive error | Matches PLAN.md §6's "permanent failover, never switches back" contract; avoids flapping between sources | Shipped — Phase 1 |
@@ -115,4 +115,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-08-27 after Phase 4*
+*Last updated: 2026-08-27 after v1.0 milestone*

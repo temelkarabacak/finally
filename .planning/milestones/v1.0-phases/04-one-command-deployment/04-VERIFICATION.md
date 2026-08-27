@@ -1,14 +1,16 @@
 ---
 phase: 04-one-command-deployment
 verified: 2026-08-26T22:20:00Z
-status: human_needed
+status: passed
 score: 20/20 must-haves verified
 behavior_unverified: 0
 overrides_applied: 0
 human_verification:
+
   - test: "With finally-app running and a real browser tab open on http://localhost:8000 (so the SSE stream is a genuine browser EventSource, not curl), run `docker stop --timeout 15 finally-app` and time it."
     expected: "Returns within roughly 10-15 seconds without a manual force-kill (docker kill)."
     why_human: "The automated curl-based SSE reader in scripts/verify_container.sh approximates but does not fully reproduce a browser EventSource connection's behavior on SIGTERM; this is 04-01-PLAN.md's own Task 2 <human-check>, explicitly deferred rather than dropped. The curl-based proxy measured 11-13s across three independent runs in this verification, which is consistent with but not identical to a browser-driven measurement."
+
   - test: "On a real Windows machine with Docker Desktop running, from the repo root run `.\\scripts\\start_windows.ps1` twice in a row, browse to http://localhost:8000, then run `.\\scripts\\stop_windows.ps1` twice, then `.\\scripts\\start_windows.ps1` again and confirm db\\finally.db still has the prior portfolio."
     expected: "Both start runs exit 0 (second reports already running, exactly one finally-app container); both stop runs exit 0 (second reports not running); the terminal UI loads with streaming prices; the portfolio survives the stop/start cycle."
     why_human: "This is 04-02-PLAN.md's own Task 2 <human-check>, explicitly deferred because no Windows host or pwsh is available in this environment. 04-RESEARCH.md Assumption A2 flags the $LASTEXITCODE-after-docker-inspect idiom as unverified on real Windows. Everything verifiable without a Windows host (branch-for-branch parity with the bash pair, all static grep-based acceptance criteria) has been checked and passes."

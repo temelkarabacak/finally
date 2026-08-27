@@ -5,6 +5,9 @@ Out-of-scope discoveries logged during execution, per the executor's scope-bound
 
 ## Plan 02-02, Task 3
 
+- **Status:** acknowledged
+- **Acknowledged at:** 2026-08-27 (v1.0 milestone close) — non-blocking lint debt, tracked in
+  `.planning/STATE.md` Deferred Items and `.planning/v1.0-MILESTONE-AUDIT.md` tech debt list.
 - **`npm run lint` reports 4 `react-hooks/set-state-in-effect` errors, not the 2 recorded in
   `.planning/STATE.md`.** The 2 documented errors are `WatchlistPanel.tsx:60,77` (Phase 1,
   already accepted as non-blocking). Two additional errors of the same category —

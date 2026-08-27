@@ -1,44 +1,43 @@
 ---
 gsd_state_version: 1.0
 current_phase: 04
-current_phase_name: One-Command Deployment
-status: executing
-stopped_at: Phase 4 context gathered
-last_updated: "2026-08-26T20:03:53.600Z"
-last_activity: 2026-08-26
-last_activity_desc: Phase 04 execution started
-state_head: a65df8e61aba1353029be39a45e40b17409a96f0
+status: completed
+stopped_at: Phase 04 complete — all phases complete
+last_updated: "2026-08-27T05:45:02.040Z"
+last_activity: 2026-08-27
+last_activity_desc: Phase 04 complete
+state_head: f56bec1b25035390b6c68174268d2fbd19bc5d4d
 progress:
   total_phases: 4
-  completed_phases: 3
+  completed_phases: 4
   total_plans: 15
-  completed_plans: 11
-  percent: 73
+  completed_plans: 15
+  percent: 100
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-08-26)
+See: .planning/PROJECT.md (updated 2026-08-27)
 
 **Core value:** A user can launch the app with one command, watch live prices stream in, buy/sell shares instantly, and ask the AI assistant to analyze or trade on their behalf — and it just works, end to end, in a single Docker container.
-**Current focus:** Phase 04 — One-Command Deployment
+**Current focus:** Milestone complete — ready to archive (`/gsd-complete-milestone`)
 
 ## Current Position
 
-Phase: 04 (One-Command Deployment) — EXECUTING
-Plan: 1 of 4
-Status: Executing Phase 04
-Last activity: 2026-08-26 — Phase 04 execution started
+Phase: 04
+Plan: Not started
+Status: All phases complete
+Last activity: 2026-08-27 — Phase 04 complete
 
-Progress: [█████░░░░░] 50%
+Progress: [████████████████████] 15/15 plans (100%)
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 11
+- Total plans completed: 15
 - Average duration: -
 - Total execution time: 0.0 hours
 
@@ -49,6 +48,7 @@ Progress: [█████░░░░░] 50%
 | 01 | 3 | - | - |
 | 02 | 4 | - | - |
 | 03 | 4 | - | - |
+| 04 | 4 | - | - |
 
 **Recent Trend:**
 
@@ -82,6 +82,11 @@ Recent decisions affecting current work:
 - [Phase 03]: Chat panel redesigned mid-phase from a bottom-overlay drawer to a right-side sidebar that pushes/reflows the grid, superseding CONTEXT.md's D-01/D-02 — the original design's fixed toggle button overlapped the Send button (unclickable), caught in UAT; user then requested the sidebar layout directly
 - [Phase 03]: Code review caught and fixed 2 critical bugs post-execution: CR-01 (every real LLM turn duplicated the user's current message in the model context — history must load before persisting the current turn) and CR-02 (chat-executed watchlist changes never refreshed the grid — `WatchlistPanel` now exposes `refetch` via `forwardRef`, combined with portfolio refresh in `page.tsx`'s `refreshAll`)
 - [Phase 03]: Security review (`03-SECURITY.md`) closed all 23 registered threats at ASVS L1 via grep-depth evidence — 18 mitigated, 5 accepted (no-auth single-user boundary, fixed context window, uncapped per-turn action count, bounded history route, append-only resend behavior)
+- [Phase 04]: SQLite bind mount (`./db:/app/db`, not a named volume) plus explicit `ENV FINALLY_DB_PATH=/app/db/finally.db` — the latter fixes a research-caught pitfall where `connection.py`'s `parents[3]` auto-detection silently breaks once `backend/` is flattened into the image
+- [Phase 04]: `--timeout-graceful-shutdown 10` (uvicorn) + `--stop-timeout 15` (docker) fixes the long-standing SSE-vs-SIGTERM shutdown hang; also backported to `scripts/smoke.sh`
+- [Phase 04]: Package-legitimacy gate approved for `@playwright/test` (56.9M weekly downloads, canonical microsoft/playwright org) before install
+- [Phase 04]: Code review caught and fixed 1 critical bug (CR-01): `start_mac.sh`'s empty `ENV_ARGS` array expansion crashed under macOS's stock bash 3.2 + `set -u`; guarded with `${ENV_ARGS[@]+"${ENV_ARGS[@]}"}`
+- [Phase 04]: Security review (`04-SECURITY.md`) closed all 10 registered threats at ASVS L1 via grep-depth + live evidence — 8 mitigated, 2 accepted (root-in-container, healthcheck payload minimality)
 
 ### Pending Todos
 
@@ -92,7 +97,7 @@ None yet.
 - [Phase 1, non-blocking]: `npm run lint` fails on 2 `react-hooks/set-state-in-effect` errors in `WatchlistPanel.tsx:60,77` — not caught by `next build`/`tsc --noEmit`; see `01-REVIEW.md`
 - [Phase 1, non-blocking]: `FailoverMarketDataSource`'s Massive→simulator swap has an unsynchronized read race on `_active`, and `MassiveDataSource.stop()`'s self-cancellation relies on asyncio scheduling order rather than a guaranteed contract; both currently work but are worth hardening
 - [Phase 1, non-blocking]: Watchlist router doesn't guard a market-source exception thrown after the DB write already succeeded (partial-failure edge case)
-- [Phase 4]: `scripts/smoke.sh`'s cleanup trap can hang indefinitely if an SSE connection is still open when it sends SIGTERM to uvicorn — surfaced twice during Phase 1 (manual run + verifier run, both needed a manual force-kill). Worth fixing before Docker/E2E lifecycle management is built on top of it
+- [Phase 4, non-blocking]: `04-REVIEW.md` warnings left as accepted follow-ups: no non-root `USER` in the Dockerfile (documented tradeoff), root-owned `node_modules` left on the host by the Playwright compose bind mount, `start_windows.ps1` missing one `$LASTEXITCODE` check after `docker start`, `scripts/smoke.sh` inherits ambient shell env
 
 ### Quick Tasks Completed
 
@@ -110,6 +115,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-08-26T15:13:10.899Z
-Stopped at: Phase 4 context gathered
-Resume file: .planning/phases/04-one-command-deployment/04-CONTEXT.md
+Last session: 2026-08-27T09:20:00Z
+Stopped at: Phase 04 complete, ready to complete milestone
+Resume file: None

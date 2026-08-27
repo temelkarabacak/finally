@@ -32,14 +32,13 @@ A user can launch the app with one command, watch live prices stream in, buy/sel
 - ✓ AI chat panel — collapsed by default, transcript persists across reloads (`GET /api/chat/history`), loading/empty/error states, inline trade confirmation cards — Phase 3, `frontend/components/{ChatDrawer,ChatMessageBubble,ChatMessageList,TradeConfirmationCard}.tsx`; human-verified via UAT (2/2 passed)
 - ✓ Backend unit tests (pytest) for LLM structured-output parsing, chat routes, and the portfolio/watchlist route status-code/response-shape matrix — Phase 3, `backend/tests/llm/`, `backend/tests/portfolio/`, `backend/tests/watchlist/`
 - ✓ Frontend unit tests (Vitest + Testing Library) — first-ever frontend test coverage: price flash, watchlist CRUD, portfolio calculations, chat rendering/loading/error states — Phase 3, `frontend/**/*.test.{ts,tsx}` (5 files, 31 tests)
+- ✓ Multi-stage Dockerfile (Node build → uv/Python runtime), single container serving frontend+API+SSE+chat on port 8000, `FINALLY_DB_PATH` bind-mounted to `db/`, bounded graceful shutdown for open SSE connections — Phase 4, `Dockerfile`, `.dockerignore`
+- ✓ Idempotent start/stop lifecycle scripts for macOS/Linux and Windows, bind-mount persistence, never destroy data on stop — Phase 4, `scripts/{start,stop}_{mac.sh,windows.ps1}`
+- ✓ Playwright E2E suite (`test/`, `docker-compose.test.yml`) covering fresh start, watchlist CRUD, buy/sell, visualizations, AI chat, SSE reconnection — all against the real production image, `LLM_MOCK=true`, tmpfs-isolated DB — Phase 4, `test/tests/01..06-*.spec.ts`
 
 ### Active
 
-Remaining platform from `planning/PLAN.md`, structured as vertical MVP slices (each phase delivers an end-to-end user capability, not just a technical layer):
-
-- [ ] Playwright E2E tests in `test/` (docker-compose.test.yml) covering fresh start, watchlist CRUD, buy/sell, visualizations, AI chat, SSE reconnection
-- [ ] Multi-stage Dockerfile (Node build → Python runtime), single port 8000, volume-mounted SQLite
-- [ ] Start/stop scripts for macOS/Linux and Windows
+None — all `planning/PLAN.md` scope for this milestone has shipped (Phases 1-4). Two items were deferred to human verification rather than automated proof (see Key Decisions): real-Windows PowerShell execution, and genuine-browser SSE shutdown timing. Both passed UAT.
 
 ### Out of Scope
 
@@ -89,6 +88,14 @@ Remaining platform from `planning/PLAN.md`, structured as vertical MVP slices (e
 | Chat panel redesigned mid-phase from a bottom-overlay drawer to a right-side sidebar that pushes/reflows the grid | Superseded CONTEXT.md decisions D-01 (bottom drawer)/D-02 (overlay, no reflow) — first UAT pass on the original design found the fixed toggle button overlapping the Send button (unclickable); user then requested the sidebar-that-pushes layout directly, which structurally removes the overlap (toggle now lives in the panel's own header, not a floating fixed element) | Shipped — Phase 3 |
 | Chat history loaded before persisting the current turn's user message, not after | Code-review-caught bug (CR-01): persisting first meant the just-inserted row appeared as the last history row AND got appended again as the explicit final turn, sending every real LLM call a duplicated current message | Shipped — Phase 3 |
 | `WatchlistPanel` exposes an imperative `refetch` via `forwardRef`/`useImperativeHandle`; `page.tsx`'s `refreshAll` combines it with the portfolio refresh for both `TradeBar` and `ChatDrawer` | Code-review-caught bug (CR-02): a chat-executed (or manual, for an unwatched ticker) watchlist add/remove updated the backend but never refreshed the grid until a full reload, since `onActionsExecuted`/`onTraded` only refreshed portfolio data | Shipped — Phase 3 |
+| SQLite persistence uses a bind mount of `./db` to `/app/db` (not a named Docker volume) | Resolves an internal PLAN.md inconsistency (§4 host folder vs §11 named-volume example); the bind mount lets a student inspect/back up/delete `db/finally.db` directly without the Docker CLI | Shipped — Phase 4 |
+| `ENV FINALLY_DB_PATH=/app/db/finally.db` set explicitly in the Dockerfile rather than relying on `connection.py`'s `parents[3]` auto-detection | Research-caught pitfall: the source-tree-relative path assumption silently breaks once `backend/` is flattened into `/app`, discarding the portfolio on the *second* container run, not the first | Shipped — Phase 4 |
+| Uvicorn `--timeout-graceful-shutdown 10` paired with `docker --stop-timeout 15` | Root-caused an already-observed shutdown hang (STATE.md Phase 4 blocker): the SSE generator only exits on client disconnect, never on server shutdown, so the default unbounded timeout waited forever with a stream open | Shipped — Phase 4 |
+| Docker Compose test service renamed from the plan's literal `app` to `webapp` | `app` is a Google-registered HSTS-preloaded gTLD baked into Chromium — a service literally named `app` gets every `http://` navigation force-upgraded to `https://`, failing with `net::ERR_SSL_PROTOCOL_ERROR`; confirmed by reproduction, not guessed | Shipped — Phase 4 |
+| `@playwright/test` accepted after a `gate="blocking-human"` legitimacy checkpoint | `04-RESEARCH.md`'s automated checker flagged `[SUS]` on a recency heuristic (version publish date, not package history); human confirmed 56.9M weekly downloads and the canonical `microsoft/playwright` org before install | Shipped — Phase 4 |
+| Purged 68 stray `test/node_modules`/npm-cache/report files that had been accidentally committed at repo init (before any GSD phase) | Pre-existing cruft the new `test/.gitignore` is meant to exclude; discovered and fixed as part of Phase 4's E2E harness setup, confirmed via `git log` that the files trace to the initial commit | Shipped — Phase 4 |
+| `start_mac.sh`/`stop_mac.sh` branch on `docker inspect`'s exit status rather than mixing its stdout with a shell `\|\| echo "absent"` fallback | This Docker CLI (29.3.1) prints a stray blank line on `docker inspect` of a nonexistent container, which silently corrupted the fallback string and skipped container creation entirely, hanging the health-check loop forever | Shipped — Phase 4 |
+| `start_mac.sh`'s optional `--env-file` array expansion guarded as `${ENV_ARGS[@]+"${ENV_ARGS[@]}"}` | Code-review-caught Critical bug (CR-01): expanding an empty bash array under `set -u` throws `unbound variable` on macOS's stock bash 3.2, crashing the exact "no `.env` yet" flow the script documents, on the platform it's named for | Shipped — Phase 4 |
 
 ## Evolution
 
@@ -108,4 +115,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-08-26 after Phase 3*
+*Last updated: 2026-08-27 after Phase 4*

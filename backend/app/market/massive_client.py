@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+from collections.abc import Awaitable, Callable
 
 from massive import RESTClient
 from massive.rest.models import SnapshotMarketType
@@ -30,6 +31,7 @@ class MassiveDataSource(MarketDataSource):
         api_key: str,
         price_cache: PriceCache,
         poll_interval: float = 15.0,
+        on_permanent_failure: Callable[[], Awaitable[None]] | None = None,
     ) -> None:
         self._api_key = api_key
         self._cache = price_cache
@@ -37,6 +39,13 @@ class MassiveDataSource(MarketDataSource):
         self._tickers: list[str] = []
         self._task: asyncio.Task | None = None
         self._client: RESTClient | None = None
+        self._on_permanent_failure = on_permanent_failure
+        self._permanently_failed = False
+
+    @property
+    def permanently_failed(self) -> bool:
+        """Whether the very first (or any) poll failure has tripped permanent failover."""
+        return self._permanently_failed
 
     async def start(self, tickers: list[str]) -> None:
         self._client = RESTClient(api_key=self._api_key)
@@ -85,9 +94,18 @@ class MassiveDataSource(MarketDataSource):
         while True:
             await asyncio.sleep(self._interval)
             await self._poll_once()
+            if self._permanently_failed:
+                break
 
     async def _poll_once(self) -> None:
-        """Execute one poll cycle: fetch snapshots, update cache."""
+        """Execute one poll cycle: fetch snapshots, update cache.
+
+        Returns immediately once permanently_failed is set, so even a stray
+        in-flight call after the trip performs no network work.
+        """
+        if self._permanently_failed:
+            return
+
         if not self._tickers or not self._client:
             return
 
@@ -116,9 +134,24 @@ class MassiveDataSource(MarketDataSource):
             logger.debug("Massive poll: updated %d/%d tickers", processed, len(self._tickers))
 
         except Exception as e:
-            logger.error("Massive poll failed: %s", e)
-            # Don't re-raise — the loop will retry on the next interval.
-            # Common failures: 401 (bad key), 429 (rate limit), network errors.
+            self._permanently_failed = True
+            message = str(e)
+            if self._api_key and self._api_key in message:
+                # Some providers echo the key back in an auth/URL error
+                # message; redact it even though we never format
+                # self._api_key into a log call ourselves.
+                message = message.replace(self._api_key, "[REDACTED]")
+            logger.error(
+                "Massive poll failed permanently (%s: %s) — switching to the simulator "
+                "for the remainder of the run, no further Massive calls will be made",
+                type(e).__name__,
+                message,
+            )
+            # One-way trip: no retry count, no threshold. The very first
+            # failure of any kind (auth, rate limit, network, service error)
+            # trips this — never re-raise, never poll again.
+            if self._on_permanent_failure is not None:
+                await self._on_permanent_failure()
 
     def _fetch_snapshots(self) -> list:
         """Synchronous call to the Massive REST API. Runs in a thread."""

@@ -14,7 +14,7 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
+/lib/
 lib64/
 parts/
 sdist/
@@ -205,3 +205,22 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# FinAlly: built frontend export copied into backend/static/ by scripts/dev.sh
+backend/static/*
+!backend/static/.gitkeep
+
+# FinAlly: runtime SQLite database
+db/finally.db
+db/finally.db-*
+
+# FinAlly: Next.js build artifacts
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+
+# GSD tooling internals (local runtime lib/state, not project source)
+.claude/gsd-core/bin/lib/
+.claude/hooks/lib/
+.claude/scripts/lib/
+.gsd/

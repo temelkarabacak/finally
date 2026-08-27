@@ -218,3 +218,9 @@ db/finally.db-*
 frontend/node_modules/
 frontend/.next/
 frontend/out/
+
+# GSD tooling internals (local runtime lib/state, not project source)
+.claude/gsd-core/bin/lib/
+.claude/hooks/lib/
+.claude/scripts/lib/
+.gsd/
